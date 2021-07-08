@@ -17,4 +17,16 @@
     <PackageReference Include="Tinkoff.Trading.OpenApi" Version="1.7.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TradeSDK\Adapters\AlorAdapter\AlorAdapter.csproj" />
+    <ProjectReference Include="..\TradeSDK\Adapters\FinamAdapter\FinamAdapter.csproj" />
+    <ProjectReference Include="..\TradeSDK\Adapters\TinkoffAdapter\TinkoffAdapter.csproj" />
+    <ProjectReference Include="..\TradeSDK\Analysis\Analysis.csproj" />
+    <ProjectReference Include="..\TradeSDK\DataCollector\DataCollector.csproj" />
+    <ProjectReference Include="..\TradeSDK\MarketDataModules\MarketDataModules.csproj" />
+    <ProjectReference Include="..\TradeSDK\Operations\Operations.csproj" />
+    <ProjectReference Include="..\TradeSDK\RetryPolicyModel\RetryPolicyModel.csproj" />
+    <ProjectReference Include="..\TradeSDK\Stock.Indicators\indicators\Indicators.csproj" />
+  </ItemGroup>
+
 </Project>
