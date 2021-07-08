@@ -1,0 +1,3 @@
+[submodule "TradeSDK"]
+	path = ../TradeSDK
+	url = https://github.com/BlankaKorvo/TradeSDK.git
