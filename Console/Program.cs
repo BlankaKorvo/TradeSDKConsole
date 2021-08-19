@@ -33,6 +33,7 @@ namespace tradeSDK
             GetStocksHistory getStocksHistory = new GetStocksHistory();
             VolumeProfileScreener volumeProfileScreener = new VolumeProfileScreener();
             VolumeIncreaseScreener volumeIncreaseScreener = new VolumeIncreaseScreener();
+            TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
 
             var candleInterval = CandleInterval.Day;
 
@@ -47,14 +48,15 @@ namespace tradeSDK
             List<CandlesList> candlesLists = new List<CandlesList>();
             foreach (var item in instrumentList)
             {
-                CandlesList candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, 40);
+                CandlesList candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, 401);
                 if (candles == null || candles.Candles.Count == 0)
                 {
                     continue;
                 }
                 candlesLists.Add(candles);
             }
-            List<CandlesList> resultCandlesList = volumeIncreaseScreener.DramIncreased(candlesLists, 20, 4);
+            //List<CandlesList> resultCandlesList = volumeIncreaseScreener.DramIncreased(candlesLists, 50, 4);
+            List<CandlesList> resultCandlesList = twoEmaScreener.TrandUp(candlesLists);
 
             foreach (var item in resultCandlesList)
             {
