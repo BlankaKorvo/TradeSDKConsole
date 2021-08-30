@@ -17,6 +17,8 @@ using TinkoffData;
 using Skender.Stock.Indicators;
 using TradingAlgorithms.IndicatorSignals;
 using Instrument = MarketDataModules.Instrument;
+using LinqStatistics;
+using Analysis.Screeners.CandlesScreener;
 
 namespace tradeSDK
 {
@@ -34,38 +36,66 @@ namespace tradeSDK
             VolumeProfileScreener volumeProfileScreener = new VolumeProfileScreener();
             VolumeIncreaseScreener volumeIncreaseScreener = new VolumeIncreaseScreener();
             TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
+            StochDivScreener stochDivScreener = new StochDivScreener();
 
-            var candleInterval = CandleInterval.Day;
+            var candleInterval = CandleInterval.FiveMinutes;
 
-            int candlesCount = 80;
+
+            //int e = -5;
+            //Console.WriteLine(6 + e);
+
+
+
+            
+
+
+            int candlesCount = 300;
             decimal maxMoneyForTrade = 9000;
             
-            MishMashScreener mishMashScreener = new MishMashScreener();
+            MishMashScreenerTrade mishMashScreener = new MishMashScreenerTrade();
             List<Instrument> instrumentList = await getStocksHistory.AllUsdStocksAsync();
 
-            //await Trading(marketDataCollector, getStocksHistory, candleInterval, candlesCount, maxMoneyForTrade, mishMashScreener);
+            await Trading(marketDataCollector, getStocksHistory, candleInterval, candlesCount, maxMoneyForTrade, mishMashScreener);
+
+            Console.ReadKey();
 
             List<CandlesList> candlesLists = new List<CandlesList>();
+
+
+
             foreach (var item in instrumentList)
-            {
-                CandlesList candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, 401);
+            {                
+                CandlesList candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, 60);
+
                 if (candles == null || candles.Candles.Count == 0)
                 {
                     continue;
                 }
+                
                 candlesLists.Add(candles);
             }
-            //List<CandlesList> resultCandlesList = volumeIncreaseScreener.DramIncreased(candlesLists, 50, 4);
-            List<CandlesList> resultCandlesList = twoEmaScreener.TrandUp(candlesLists);
+            Log.Information("candlesLists Count = " + candlesLists.Count);
 
-            foreach (var item in resultCandlesList)
-            {
-                var instrument = await marketDataCollector.GetInstrumentByFigi(item.Figi);
-                var ticker = instrument.Ticker;
-                Console.Write(item.Figi + "  ");
-                Console.WriteLine(ticker);
-            }
-            Console.ReadLine();
+            //List<CandlesList> resultCandlesList = volumeIncreaseScreener.DramIncreased(candlesLists, 50, 4);
+
+            ////Screener
+            //List<CandlesList> resultCandlesList = stochDivScreener.TrandUp(candlesLists);
+
+            //Console.WriteLine("resultCandlesList = " + resultCandlesList.Count);
+
+            //foreach (var item in resultCandlesList)
+            //{
+            //    var instrument = await marketDataCollector.GetInstrumentByFigi(item.Figi);
+            //    var ticker = instrument.Ticker;
+            //    Console.Write(item.Figi + "  ");
+            //    Console.WriteLine(ticker);
+            //}
+
+            //Console.ReadKey();
+
+
+            ////End Screener
+
 
             async Task HZ(MarketDataCollector marketDataCollector)
             {
@@ -152,7 +182,16 @@ namespace tradeSDK
 
         }
 
-        private static async Task Trading(MarketDataCollector marketDataCollector, GetStocksHistory getStocksHistory, CandleInterval candleInterval, int candlesCount, decimal maxMoneyForTrade, MishMashScreener mishMashScreener)
+        private static decimal AngleCalc(decimal value1, decimal value2)
+        {
+            double deltaLeg = Convert.ToDouble(value2 - value1);
+            double legDifference = Math.Atan(deltaLeg);
+            double angle = legDifference * (180 / Math.PI);
+            Log.Information("Angle: " + angle.ToString());
+
+            return (decimal)angle;
+        }
+        private static async Task Trading(MarketDataCollector marketDataCollector, GetStocksHistory getStocksHistory, CandleInterval candleInterval, int candlesCount, decimal maxMoneyForTrade, MishMashScreenerTrade mishMashScreener)
         {
             try
             {
@@ -171,11 +210,11 @@ namespace tradeSDK
                         Console.WriteLine(item.Figi);
                     }
                 }
-                Console.ReadLine();
+                //Console.ReadLine();
                 List<string> figis = new List<string> { };
                 foreach (string item in tickers)
                 {
-                    Instrument instrument = await marketDataCollector.GetInstrumentByTicker(item);
+                    Instrument instrument = await marketDataCollector.GetInstrumentByTicker(item, Provider.Tinkoff);
                     figis.Add(instrument.Figi);
                 }
                 await mishMashScreener.CycleTrading(candleInterval, candlesCount, maxMoneyForTrade, figis);
