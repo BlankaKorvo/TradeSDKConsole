@@ -18,6 +18,7 @@ using Instrument = MarketDataModules.Instrument;
 using LinqStatistics;
 using Analysis.Screeners.CandlesScreener;
 using Analysis.Screeners.Helpers;
+using Operation = MarketDataModules.Operation;
 
 namespace tradeSDK
 {
@@ -36,24 +37,82 @@ namespace tradeSDK
             VolumeIncreaseScreener volumeIncreaseScreener = new VolumeIncreaseScreener();
             TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
             StochDivScreener stochDivScreener = new StochDivScreener();
+            Signal signal = new Signal();
 
-            var candleInterval = CandleInterval.FiveMinutes;
-
-
-            //int e = -5;
-            //Console.WriteLine(6 + e);
-                       
+            var candleInterval = CandleInterval.FiveMinutes;              
 
 
-            int candlesCount = 300;
+            int candlesCount = 200;
             decimal budget = 9000;
 
-            List<string> Tickers = new List<string> { "APPL", "AMZN" };
+            var op = Operation.fromLong;
+            List<string> Tickers = new List<string> { "BBG000BVPV84" };
+            bool position = true;
+            while (true)                
+            {
+                foreach (var item in Tickers)
+                {
+                    var candleList = await marketDataCollector.GetCandlesAsync(item, candleInterval, candlesCount);
+                    var orderbook = await marketDataCollector.GetOrderbookAsync(item, Provider.Tinkoff, 1);
 
+                    var buyPrice = orderbook.Asks.FirstOrDefault().Price;
+                    var sellPrice = orderbook.Bids.FirstOrDefault().Price;
 
-            int[][] array = new int[3][] ;
+                    var signalLongResult = signal.GmmaLongSignal(candleList, sellPrice);
+                    var signalFromLongResult = signal.GmmaFromLongSignal(candleList, sellPrice);
+                    var signalShortResult = signal.GmmaShortSignal(candleList, buyPrice);
+                    var signalFromShortResult = signal.GmmaFromShortSignal(candleList, buyPrice);
 
+                    if (signalLongResult
+                        && 
+                        (op == Operation.fromLong || op == Operation.fromShort))
+                    {
+                        op = Operation.toLong;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" Long " + item + "price " + buyPrice);
+                            sw.WriteLine();
+                        }
+                    }
 
+                    if (signalFromLongResult
+                        &&
+                        (op == Operation.toLong))
+                    {
+                        op = Operation.fromLong;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" FromLong " + item + "price " + sellPrice);
+                            sw.WriteLine();
+                        }
+                    }
+
+                    if (signalShortResult
+                        &&
+                        (op == Operation.fromLong || op == Operation.fromShort))
+                    {
+                        op = Operation.toShort;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" ToShort " + item + "price " + sellPrice);
+                            sw.WriteLine();
+                        }
+                    }
+
+                    if (signalFromShortResult
+                        &&
+                        (op == Operation.toShort))
+                    {
+                        op = Operation.fromShort;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" FromShort " + item + "price " + buyPrice);
+                            sw.WriteLine();
+                        }
+                    }
+
+                }                
+            }
 
 
 
