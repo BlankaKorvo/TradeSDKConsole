@@ -27,7 +27,7 @@
     <ProjectReference Include="..\TradeSDK\MarketDataModules\MarketDataModules.csproj" />
     <ProjectReference Include="..\TradeSDK\Operations\Operations.csproj" />
     <ProjectReference Include="..\TradeSDK\RetryPolicyModel\RetryPolicyModel.csproj" />
-    <ProjectReference Include="..\TradeSDK\Stock.Indicators\indicators\Indicators.csproj" />
+    <ProjectReference Include="..\TradeSDK\Stock.Indicators\src\Indicators.csproj" />
   </ItemGroup>
 
 </Project>
