@@ -40,21 +40,28 @@ namespace tradeSDK
             StochDivScreener stochDivScreener = new StochDivScreener();
             Signal signal = new Signal();
 
-            var candleInterval = CandleInterval.FiveMinutes;              
+            var candleInterval = CandleInterval.ThreeMinutes;              
 
 
             int candlesCount = 200;
             decimal budget = 9000;
 
             var lastOperation = TradeOperation.fromLong;
-            List<string> Tickers = new List<string> { "BBG000BVPV84" };
-            bool position = true;
+            List<string> Tickers = new List<string> {/* "BBG000BVPV84",*/ "BBG004730RP0" };
             while (true)                
             {
                 foreach (var item in Tickers)
                 {
-                    var candleList = await marketDataCollector.GetCandlesAsync(item, candleInterval, candlesCount);
+                    Log.Information("Start trade: " + item);
                     var orderbook = await marketDataCollector.GetOrderbookAsync(item, Provider.Tinkoff, 1);
+
+                    if (orderbook == null)
+                    {
+                        Log.Information("Orderbook null");
+                        continue;
+                    }
+
+                    var candleList = await marketDataCollector.GetCandlesAsync(item, candleInterval, candlesCount);
 
                     var bestAsk = orderbook.Asks.FirstOrDefault().Price;
                     var bestBid = orderbook.Bids.FirstOrDefault().Price;
@@ -73,6 +80,7 @@ namespace tradeSDK
                             sw.WriteLine(DateTime.Now + @" Long " + item + "price " + bestAsk);
                             sw.WriteLine();
                         }
+                        Log.Information("Stop trade: " + item + " TradeOperation.toLong");
                     }
 
                     if (gmmaDecision.TradeVariant() == TradeOperation.fromLong
@@ -85,6 +93,7 @@ namespace tradeSDK
                             sw.WriteLine(DateTime.Now + @" FromLong " + item + "price " + bestBid);
                             sw.WriteLine();
                         }
+                        Log.Information("Stop trade: " + item + " TradeOperation.fromLong");
                     }
 
                     if (gmmaDecision.TradeVariant() == TradeOperation.toShort
@@ -97,6 +106,7 @@ namespace tradeSDK
                             sw.WriteLine(DateTime.Now + @" ToShort " + item + "price " + bestBid);
                             sw.WriteLine();
                         }
+                        Log.Information("Stop trade: " + item + " TradeOperation.toShort");
                     }
 
                     if (gmmaDecision.TradeVariant() == TradeOperation.fromShort
@@ -109,8 +119,8 @@ namespace tradeSDK
                             sw.WriteLine(DateTime.Now + @" FromShort " + item + "price " + bestAsk);
                             sw.WriteLine();
                         }
+                        Log.Information("Stop trade: " + item + " TradeOperation.fromShort");
                     }
-
                 }                
             }
 
@@ -283,15 +293,8 @@ namespace tradeSDK
 
         }
 
-        private static decimal AngleCalc(decimal value1, decimal value2)
-        {
-            double deltaLeg = Convert.ToDouble(value2 - value1);
-            double legDifference = Math.Atan(deltaLeg);
-            double angle = legDifference * (180 / Math.PI);
-            Log.Information("Angle: " + angle.ToString());
 
-            return (decimal)angle;
-        }
+    
         //private static async Task Trading(MarketDataCollector marketDataCollector, GetStocksHistory getStocksHistory, CandleInterval candleInterval, int candlesCount, decimal maxMoneyForTrade, Analysis.Screeners.CandlesScreener.Operation mishMashScreener)
         //{
         //    try
