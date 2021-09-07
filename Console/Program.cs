@@ -47,7 +47,7 @@ namespace tradeSDK
             decimal budget = 9000;
 
             var lastOperation = TradeOperation.fromLong;
-            List<string> Tickers = new List<string> {/* "BBG000BVPV84",*/ "BBG004730RP0" };
+            List<string> Tickers = new List<string> {/* "BBG000BVPV84",*//* "BBG004730RP0",*/ "BBG000B9XRY4" };
             while (true)                
             {
                 foreach (var item in Tickers)
@@ -139,16 +139,14 @@ namespace tradeSDK
 
 
 
-            Analysis.Screeners.CandlesScreener.Operation mishMashScreener = new Analysis.Screeners.CandlesScreener.Operation();
-            List<Instrument> instrumentList = await getStocksHistory.AllUsdStocksAsync();
+            // Analysis.Screeners.CandlesScreener.Operation mishMashScreener = new Analysis.Screeners.CandlesScreener.Operation();
+            // List<Instrument> instrumentList = await getStocksHistory.AllUsdStocksAsync();
 
-           // await Trading(marketDataCollector, getStocksHistory, candleInterval, candlesCount, budget, mishMashScreener);
+            //// await Trading(marketDataCollector, getStocksHistory, candleInterval, candlesCount, budget, mishMashScreener);
 
-            Console.ReadKey();
+            // Console.ReadKey();
 
-            List<CandlesList> candlesLists = new List<CandlesList>();
-
-
+            // List<CandlesList> candlesLists = new List<CandlesList>();
 
 
 
@@ -174,110 +172,112 @@ namespace tradeSDK
 
 
 
-            foreach (var item in instrumentList)
-            {                
-                CandlesList candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, 60);
-
-                if (candles == null || candles.Candles.Count == 0)
-                {
-                    continue;
-                }
-                
-                candlesLists.Add(candles);
-            }
-            Log.Information("candlesLists Count = " + candlesLists.Count);
-
-            //List<CandlesList> resultCandlesList = volumeIncreaseScreener.DramIncreased(candlesLists, 50, 4);
-
-            ////Screener
-            //List<CandlesList> resultCandlesList = stochDivScreener.TrandUp(candlesLists);
-
-            //Console.WriteLine("resultCandlesList = " + resultCandlesList.Count);
-
-            //foreach (var item in resultCandlesList)
-            //{
-            //    var instrument = await marketDataCollector.GetInstrumentByFigi(item.Figi);
-            //    var ticker = instrument.Ticker;
-            //    Console.Write(item.Figi + "  ");
-            //    Console.WriteLine(ticker);
-            //}
-
-            //Console.ReadKey();
 
 
-            ////End Screener
+            // foreach (var item in instrumentList)
+            // {                
+            //     CandlesList candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, 60);
+
+            //     if (candles == null || candles.Candles.Count == 0)
+            //     {
+            //         continue;
+            //     }
+
+            //     candlesLists.Add(candles);
+            // }
+            // Log.Information("candlesLists Count = " + candlesLists.Count);
+
+            // //List<CandlesList> resultCandlesList = volumeIncreaseScreener.DramIncreased(candlesLists, 50, 4);
+
+            // ////Screener
+            // //List<CandlesList> resultCandlesList = stochDivScreener.TrandUp(candlesLists);
+
+            // //Console.WriteLine("resultCandlesList = " + resultCandlesList.Count);
+
+            // //foreach (var item in resultCandlesList)
+            // //{
+            // //    var instrument = await marketDataCollector.GetInstrumentByFigi(item.Figi);
+            // //    var ticker = instrument.Ticker;
+            // //    Console.Write(item.Figi + "  ");
+            // //    Console.WriteLine(ticker);
+            // //}
+
+            // //Console.ReadKey();
 
 
-            async Task HZ(MarketDataCollector marketDataCollector)
-            {
-                Signal signal = new Signal();
-                List<Instrument> instrumentList = await getStocksHistory.AllUsdStocksAsync();
-                //List<Instrument> instrumentList = new List<Instrument>();
-                //var xxx = await marketDataCollector.GetInstrumentByFigi("BBG000BPL8G3");
-                //instrumentList.Add(xxx);
+            // ////End Screener
 
-                var candleInterval = CandleInterval.Hour;
 
-                List<CandlesList> candlesList = new List<CandlesList>();
-                foreach (var item in instrumentList)
-                {
-                    var candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, new DateTime(2021, 1, 1));
-                    if (candles.Candles.Count == 0)
-                    {
-                        continue;
-                    }
-                    candlesList.Add(candles);
-                }
-                List<CandlesProfileList> profileList = volumeProfileScreener.CreateProfilesList(candlesList, 50, VolumeProfileMethod.All);
+            // async Task HZ(MarketDataCollector marketDataCollector)
+            // {
+            //     Signal signal = new Signal();
+            //     List<Instrument> instrumentList = await getStocksHistory.AllUsdStocksAsync();
+            //     //List<Instrument> instrumentList = new List<Instrument>();
+            //     //var xxx = await marketDataCollector.GetInstrumentByFigi("BBG000BPL8G3");
+            //     //instrumentList.Add(xxx);
 
-                List<CandlesProfileList> profilesList2 = volumeProfileScreener.BargainingOnPrice(profileList, 10);
+            //     var candleInterval = CandleInterval.Hour;
 
-                List<CandlesProfileList> profilesList1 = volumeProfileScreener.OrderVolBargaining(profilesList2);
+            //     List<CandlesList> candlesList = new List<CandlesList>();
+            //     foreach (var item in instrumentList)
+            //     {
+            //         var candles = await marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, new DateTime(2021, 1, 1));
+            //         if (candles.Candles.Count == 0)
+            //         {
+            //             continue;
+            //         }
+            //         candlesList.Add(candles);
+            //     }
+            //     List<CandlesProfileList> profileList = volumeProfileScreener.CreateProfilesList(candlesList, 50, VolumeProfileMethod.All);
 
-                Log.Information("Start set ticker");
-                foreach (var item in profilesList1)
-                {
-                    VolumeProfile maxVol = item.VolumeProfiles.OrderByDescending(x => (x.VolumeGreen + x.VolumeRed)).FirstOrDefault();
-                    //Instrument instrument = await marketDataCollector.GetInstrumentByFigi(item.Figi);
-                    decimal volGreenWeight = volumeProfileScreener.RevWeightGreen(maxVol);
-                    decimal volRedWeight = 100 - volGreenWeight;
+            //     List<CandlesProfileList> profilesList2 = volumeProfileScreener.BargainingOnPrice(profileList, 10);
 
-                    Instrument instrument = (from t in instrumentList
-                                             where t.Figi == item.Figi
-                                             select t).FirstOrDefault();
-                    using (StreamWriter sw = new StreamWriter("TickersAll " + candleInterval, true, System.Text.Encoding.Default))
-                    {
-                        sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight);
-                        sw.WriteLine();
-                    }
-                    if ((maxVol.UpperBound + maxVol.LowerBound) / 2 < item.Candles.Last().Close)
-                    {
-                        using (StreamWriter sw = new StreamWriter("TickersOverPrice " + candleInterval, true, System.Text.Encoding.Default))
-                        {
-                            sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight);
-                            sw.WriteLine();
-                        }
-                    }
-                    if (volGreenWeight > 50)
-                    {
-                        using (StreamWriter sw = new StreamWriter("TickersOverGreenWeght " + candleInterval, true, System.Text.Encoding.Default))
-                        {
-                            sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight);
-                            sw.WriteLine();
-                        }
-                    }
-                    List<AdlResult> adl = Mapper.AdlData(item, item.Candles.Last().Close, 1);
-                    var AdlAngle = signal.AdlDegreeAverageAngle(adl, 10, Signal.Adl.Adl);
-                    if (AdlAngle > 20 && adl.Last().Adl > 0)
-                    {
-                        using (StreamWriter sw = new StreamWriter("TickersOverADL " + candleInterval, true, System.Text.Encoding.Default))
-                        {
-                            sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight + " ADL angle = " + AdlAngle + " ADL " + adl.Last().Adl);
-                            sw.WriteLine();
-                        }
-                    }
-                }
-            }
+            //     List<CandlesProfileList> profilesList1 = volumeProfileScreener.OrderVolBargaining(profilesList2);
+
+            //     Log.Information("Start set ticker");
+            //     foreach (var item in profilesList1)
+            //     {
+            //         VolumeProfile maxVol = item.VolumeProfiles.OrderByDescending(x => (x.VolumeGreen + x.VolumeRed)).FirstOrDefault();
+            //         //Instrument instrument = await marketDataCollector.GetInstrumentByFigi(item.Figi);
+            //         decimal volGreenWeight = volumeProfileScreener.RevWeightGreen(maxVol);
+            //         decimal volRedWeight = 100 - volGreenWeight;
+
+            //         Instrument instrument = (from t in instrumentList
+            //                                  where t.Figi == item.Figi
+            //                                  select t).FirstOrDefault();
+            //         using (StreamWriter sw = new StreamWriter("TickersAll " + candleInterval, true, System.Text.Encoding.Default))
+            //         {
+            //             sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight);
+            //             sw.WriteLine();
+            //         }
+            //         if ((maxVol.UpperBound + maxVol.LowerBound) / 2 < item.Candles.Last().Close)
+            //         {
+            //             using (StreamWriter sw = new StreamWriter("TickersOverPrice " + candleInterval, true, System.Text.Encoding.Default))
+            //             {
+            //                 sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight);
+            //                 sw.WriteLine();
+            //             }
+            //         }
+            //         if (volGreenWeight > 50)
+            //         {
+            //             using (StreamWriter sw = new StreamWriter("TickersOverGreenWeght " + candleInterval, true, System.Text.Encoding.Default))
+            //             {
+            //                 sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight);
+            //                 sw.WriteLine();
+            //             }
+            //         }
+            //         List<AdlResult> adl = Mapper.AdlData(item, item.Candles.Last().Close, 1);
+            //         var AdlAngle = signal.AdlDegreeAverageAngle(adl, 10, Signal.Adl.Adl);
+            //         if (AdlAngle > 20 && adl.Last().Adl > 0)
+            //         {
+            //             using (StreamWriter sw = new StreamWriter("TickersOverADL " + candleInterval, true, System.Text.Encoding.Default))
+            //             {
+            //                 sw.WriteLine(instrument.Ticker + " UpperBound: " + maxVol.UpperBound + " LowerBound: " + maxVol.LowerBound + " VolumeGreen: " + maxVol.VolumeGreen + " VolumeRed: " + maxVol.VolumeRed + " CandlesCount: " + maxVol.CandlesCount + " Close:" + item.Candles.Last().Close + " GreenVolRev = " + volGreenWeight + " RedVolRev = " + volRedWeight + " ADL angle = " + AdlAngle + " ADL " + adl.Last().Adl);
+            //                 sw.WriteLine();
+            //             }
+            //         }
+            //     }
+            // }
 
 
             //foreach (var x in vps)
@@ -294,7 +294,7 @@ namespace tradeSDK
         }
 
 
-    
+
         //private static async Task Trading(MarketDataCollector marketDataCollector, GetStocksHistory getStocksHistory, CandleInterval candleInterval, int candlesCount, decimal maxMoneyForTrade, Analysis.Screeners.CandlesScreener.Operation mishMashScreener)
         //{
         //    try
