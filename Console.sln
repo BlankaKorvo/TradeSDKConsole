@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataCollector", "TradeSDK\D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataModules", "TradeSDK\MarketDataModules\MarketDataModules.csproj", "{96F764C1-059C-46F7-A4A0-B161AC1280ED}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Operations", "TradeSDK\Operations\Operations.csproj", "{5FE647A0-E444-412F-82A6-ED384E8278A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader", "TradeSDK\Operations\Trader.csproj", "{5FE647A0-E444-412F-82A6-ED384E8278A4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RetryPolicyModel", "TradeSDK\RetryPolicyModel\RetryPolicyModel.csproj", "{1D6AF5B1-B037-483D-BAA8-E04CE9B450F2}"
 EndProject

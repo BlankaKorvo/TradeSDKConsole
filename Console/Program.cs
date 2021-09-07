@@ -47,13 +47,14 @@ namespace tradeSDK
             decimal budget = 9000;
 
             var lastOperation = TradeOperation.fromLong;
-            List<string> Tickers = new List<string> {/* "BBG000BVPV84",*//* "BBG004730RP0",*/ "BBG000B9XRY4" };
+            List<string> Tickers = new List<string> {"BBG000BVPV84"};
+             
             while (true)                
             {
                 foreach (var item in Tickers)
                 {
                     Log.Information("Start trade: " + item);
-                    var orderbook = await marketDataCollector.GetOrderbookAsync(item, Provider.Tinkoff, 1);
+                    var orderbook = await marketDataCollector.GetOrderbookAsync(item, Provider.Tinkoff, 20);
 
                     if (orderbook == null)
                     {
@@ -71,8 +72,9 @@ namespace tradeSDK
                     //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
 
                     if (gmmaDecision.TradeVariant() == TradeOperation.toLong
-                        && 
-                        (lastOperation == TradeOperation.fromLong || lastOperation == TradeOperation.fromShort))
+                        &&
+                        (lastOperation == TradeOperation.fromLong || lastOperation == TradeOperation.fromShort)
+                        )
                     {
                         lastOperation = TradeOperation.toLong;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
@@ -85,7 +87,8 @@ namespace tradeSDK
 
                     if (gmmaDecision.TradeVariant() == TradeOperation.fromLong
                         &&
-                        (lastOperation == TradeOperation.toLong))
+                        (lastOperation == TradeOperation.toLong)
+                        )
                     {
                         lastOperation = TradeOperation.fromLong;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
@@ -98,7 +101,8 @@ namespace tradeSDK
 
                     if (gmmaDecision.TradeVariant() == TradeOperation.toShort
                         &&
-                        (lastOperation == TradeOperation.fromLong || lastOperation == TradeOperation.fromShort))
+                        (lastOperation == TradeOperation.fromLong || lastOperation == TradeOperation.fromShort)
+                        )
                     {
                         lastOperation = TradeOperation.toShort;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
@@ -111,7 +115,8 @@ namespace tradeSDK
 
                     if (gmmaDecision.TradeVariant() == TradeOperation.fromShort
                         &&
-                        (lastOperation == TradeOperation.toShort))
+                        (lastOperation == TradeOperation.toShort)
+                        )
                     {
                         lastOperation = TradeOperation.fromShort;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
