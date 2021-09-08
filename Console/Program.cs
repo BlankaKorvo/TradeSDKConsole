@@ -18,7 +18,7 @@ using Instrument = MarketDataModules.Instrument;
 using LinqStatistics;
 using Analysis.Screeners.CandlesScreener;
 using Analysis.Screeners.Helpers;
-using TradeOperation = MarketDataModules.TradeOperation;
+using TradeTarget = MarketDataModules.TradeTarget;
 using Analysis.TradeDecision;
 
 namespace tradeSDK
@@ -46,7 +46,7 @@ namespace tradeSDK
             int candlesCount = 200;
             decimal budget = 9000;
 
-            var lastOperation = TradeOperation.fromLong;
+            var lastOperation = TradeTarget.fromLong;
             List<string> Tickers = new List<string> {"BBG000BVPV84"};
              
             while (true)                
@@ -71,12 +71,12 @@ namespace tradeSDK
 
                     //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
 
-                    if (gmmaDecision.TradeVariant() == TradeOperation.toLong
+                    if (gmmaDecision.TradeVariant() == TradeTarget.toLong
                         &&
-                        (lastOperation == TradeOperation.fromLong || lastOperation == TradeOperation.fromShort)
+                        (lastOperation == TradeTarget.fromLong || lastOperation == TradeTarget.fromShort)
                         )
                     {
-                        lastOperation = TradeOperation.toLong;
+                        lastOperation = TradeTarget.toLong;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
                         {
                             sw.WriteLine(DateTime.Now + @" Long " + item + "price " + bestAsk);
@@ -85,12 +85,12 @@ namespace tradeSDK
                         Log.Information("Stop trade: " + item + " TradeOperation.toLong");
                     }
 
-                    if (gmmaDecision.TradeVariant() == TradeOperation.fromLong
+                    if (gmmaDecision.TradeVariant() == TradeTarget.fromLong
                         &&
-                        (lastOperation == TradeOperation.toLong)
+                        (lastOperation == TradeTarget.toLong)
                         )
                     {
-                        lastOperation = TradeOperation.fromLong;
+                        lastOperation = TradeTarget.fromLong;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
                         {
                             sw.WriteLine(DateTime.Now + @" FromLong " + item + "price " + bestBid);
@@ -99,12 +99,12 @@ namespace tradeSDK
                         Log.Information("Stop trade: " + item + " TradeOperation.fromLong");
                     }
 
-                    if (gmmaDecision.TradeVariant() == TradeOperation.toShort
+                    if (gmmaDecision.TradeVariant() == TradeTarget.toShort
                         &&
-                        (lastOperation == TradeOperation.fromLong || lastOperation == TradeOperation.fromShort)
+                        (lastOperation == TradeTarget.fromLong || lastOperation == TradeTarget.fromShort)
                         )
                     {
-                        lastOperation = TradeOperation.toShort;
+                        lastOperation = TradeTarget.toShort;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
                         {
                             sw.WriteLine(DateTime.Now + @" ToShort " + item + "price " + bestBid);
@@ -113,12 +113,12 @@ namespace tradeSDK
                         Log.Information("Stop trade: " + item + " TradeOperation.toShort");
                     }
 
-                    if (gmmaDecision.TradeVariant() == TradeOperation.fromShort
+                    if (gmmaDecision.TradeVariant() == TradeTarget.fromShort
                         &&
-                        (lastOperation == TradeOperation.toShort)
+                        (lastOperation == TradeTarget.toShort)
                         )
                     {
-                        lastOperation = TradeOperation.fromShort;
+                        lastOperation = TradeTarget.fromShort;
                         using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
                         {
                             sw.WriteLine(DateTime.Now + @" FromShort " + item + "price " + bestAsk);
