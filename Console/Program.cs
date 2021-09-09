@@ -43,7 +43,7 @@ namespace tradeSDK
 
 
             /// AutoTrading
-            List<string> Tickers = new List<string> { "AMZN", "AAPL" };
+            List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG" };
             List<Instrument> instruments = new List<Instrument>();
             foreach (var item in Tickers)
             {
