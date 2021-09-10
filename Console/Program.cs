@@ -45,17 +45,17 @@ namespace tradeSDK
 
 
             /// AutoTrading
-            List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
-            List<Instrument> instruments = new List<Instrument>();
-            foreach (var item in Tickers)
-            {
-                instruments.Add(await marketDataCollector.GetInstrumentByTickerAsync(item));
-            }
-            InstrumentList instrumentList = new InstrumentList(instruments.Count, instruments);
-            AutoTrading autoTrading = new AutoTrading() { CandleInterval = CandleInterval.TwoMinutes, CandlesCount = 70 };
-            await autoTrading.AutoTradingInstruments(instrumentList, 2);
+            //List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
+            //List<Instrument> instruments = new List<Instrument>();
+            //foreach (var item in Tickers)
+            //{
+            //    instruments.Add(await marketDataCollector.GetInstrumentByTickerAsync(item));
+            //}
+            //InstrumentList instrumentList = new InstrumentList(instruments.Count, instruments);
+            //AutoTrading autoTrading = new AutoTrading() { CandleInterval = CandleInterval.TwoMinutes, CandlesCount = 70 };
+            //await autoTrading.AutoTradingInstruments(instrumentList, 2);
             /// AutoTrading
-            /// 
+
 
 
             ///// Screener OrderBook
@@ -84,6 +84,92 @@ namespace tradeSDK
             //}
             ///// Screener OrderBook
 
+
+            ///Test Algo
+            var lastOperation = TradeTarget.fromLong;
+            CandleInterval candleInterval = CandleInterval.TwoMinutes;
+            int candlesCount = 70;
+            List<string> Tickers = new List<string> { "BBG000BVPV84" };
+            while (true)
+            {
+                foreach (var item in Tickers)
+                {
+                    Log.Information("Start trade: " + item);
+                    var orderbook = await marketDataCollector.GetOrderbookAsync(item, Provider.Tinkoff, 20);
+
+                    if (orderbook == null)
+                    {
+                        Log.Information("Orderbook null");
+                        continue;
+                    }
+
+                    var candleList = await marketDataCollector.GetCandlesAsync(item, candleInterval, candlesCount);
+
+                    var bestAsk = orderbook.Asks.FirstOrDefault().Price;
+                    var bestBid = orderbook.Bids.FirstOrDefault().Price;
+
+                    GmmaDecision gmmaDecision = new GmmaDecision() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+
+                    //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
+
+                    if (gmmaDecision.TradeVariant() == TradeTarget.toLong
+                        &&
+                        (lastOperation == TradeTarget.fromLong || lastOperation == TradeTarget.fromShort)
+                        )
+                    {
+                        lastOperation = TradeTarget.toLong;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" Long " + item + "price " + bestAsk);
+                            sw.WriteLine();
+                        }
+                        Log.Information("Stop trade: " + item + " TradeOperation.toLong");
+                    }
+
+                    if (gmmaDecision.TradeVariant() == TradeTarget.fromLong
+                        &&
+                        (lastOperation == TradeTarget.toLong)
+                        )
+                    {
+                        lastOperation = TradeTarget.fromLong;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" FromLong " + item + "price " + bestBid);
+                            sw.WriteLine();
+                        }
+                        Log.Information("Stop trade: " + item + " TradeOperation.fromLong");
+                    }
+
+                    if (gmmaDecision.TradeVariant() == TradeTarget.toShort
+                        &&
+                        (lastOperation == TradeTarget.fromLong || lastOperation == TradeTarget.fromShort)
+                        )
+                    {
+                        lastOperation = TradeTarget.toShort;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" ToShort " + item + "price " + bestBid);
+                            sw.WriteLine();
+                        }
+                        Log.Information("Stop trade: " + item + " TradeOperation.toShort");
+                    }
+
+                    if (gmmaDecision.TradeVariant() == TradeTarget.fromShort
+                        &&
+                        (lastOperation == TradeTarget.toShort)
+                        )
+                    {
+                        lastOperation = TradeTarget.fromShort;
+                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(DateTime.Now + @" FromShort " + item + "price " + bestAsk);
+                            sw.WriteLine();
+                        }
+                        Log.Information("Stop trade: " + item + " TradeOperation.fromShort");
+                    }
+                }
+                ///Test Algo
+            }
         }
     }
 }
