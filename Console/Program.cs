@@ -21,6 +21,7 @@ using Analysis.Screeners.Helpers;
 using TradeTarget = MarketDataModules.TradeTarget;
 using Analysis.TradeDecision;
 using Trader;
+using System.Threading;
 
 namespace tradeSDK
 {
@@ -39,20 +40,49 @@ namespace tradeSDK
             VolumeIncreaseScreener volumeIncreaseScreener = new VolumeIncreaseScreener();
             TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
             StochDivScreener stochDivScreener = new StochDivScreener();
+            OrderbookScreener orderbookScreener = new OrderbookScreener();
             Signal signal = new Signal();
 
 
             /// AutoTrading
-            List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG" };
+            List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
             List<Instrument> instruments = new List<Instrument>();
             foreach (var item in Tickers)
             {
                 instruments.Add(await marketDataCollector.GetInstrumentByTickerAsync(item));
             }
             InstrumentList instrumentList = new InstrumentList(instruments.Count, instruments);
-            AutoTrading autoTrading = new AutoTrading() { CandleInterval = CandleInterval.FiveMinutes, CandlesCount = 200 };
+            AutoTrading autoTrading = new AutoTrading() { CandleInterval = CandleInterval.TwoMinutes, CandlesCount = 70 };
             await autoTrading.AutoTradingInstruments(instrumentList, 2);
             /// AutoTrading
+            /// 
+
+
+            ///// Screener OrderBook
+            //InstrumentList instrumentList = await marketDataCollector.GetInstrumentListAsync();
+            //List<Instrument> instrumentsUSD = (from instrument in instrumentList.Instruments
+            //                                   where instrument.Currency == Currency.Usd
+            //                                   select instrument)
+            //                               .ToList();
+
+            //List<Orderbook> orderbooks = new List<Orderbook>();
+
+            //foreach (var item in instrumentsUSD)
+            //{
+            //    var element = await marketDataCollector.GetOrderbookAsync(item.Figi);
+            //    if (element == null)
+            //        continue;
+            //    else
+            //        orderbooks.Add(element);
+            //}
+
+            //List<string> FigiLong = orderbookScreener.OrderbookLong(orderbooks, 10);
+            //foreach (var item in FigiLong)
+            //{
+            //    var result = await marketDataCollector.GetInstrumentByFigi(item);
+            //    Console.WriteLine(result.Ticker);
+            //}
+            ///// Screener OrderBook
 
         }
     }
