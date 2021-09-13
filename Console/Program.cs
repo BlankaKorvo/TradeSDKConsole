@@ -86,16 +86,25 @@ namespace tradeSDK
 
 
             ///Test Algo
-            var lastOperation = TradeTarget.fromLong;
+            List<TradeInstrument> tradeInstrumentList = new List<TradeInstrument>();
+
             CandleInterval candleInterval = CandleInterval.TwoMinutes;
             int candlesCount = 70;
-            List<string> Tickers = new List<string> { "BBG000BVPV84" };
+            List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
+            foreach (var item in Tickers)
+            {
+                var instrument = await marketDataCollector.GetInstrumentByTickerAsync(item);
+                TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong };
+                tradeInstrumentList.Add(tradeInstrument);
+            }
+
+
             while (true)
             {
-                foreach (var item in Tickers)
+                foreach (var item in tradeInstrumentList)
                 {
-                    Log.Information("Start trade: " + item);
-                    var orderbook = await marketDataCollector.GetOrderbookAsync(item, Provider.Tinkoff, 20);
+                    Log.Information("Start trade: " + item.figi);
+                    var orderbook = await marketDataCollector.GetOrderbookAsync(item.figi, Provider.Tinkoff, 20);
 
                     if (orderbook == null)
                     {
@@ -103,7 +112,7 @@ namespace tradeSDK
                         continue;
                     }
 
-                    var candleList = await marketDataCollector.GetCandlesAsync(item, candleInterval, candlesCount);
+                    var candleList = await marketDataCollector.GetCandlesAsync(item.figi, candleInterval, candlesCount);
 
                     var bestAsk = orderbook.Asks.FirstOrDefault().Price;
                     var bestBid = orderbook.Bids.FirstOrDefault().Price;
@@ -114,62 +123,67 @@ namespace tradeSDK
 
                     if (gmmaDecision.TradeVariant() == TradeTarget.toLong
                         &&
-                        (lastOperation == TradeTarget.fromLong || lastOperation == TradeTarget.fromShort)
+                        (item.tradeTarget == TradeTarget.fromLong || item.tradeTarget == TradeTarget.fromShort)
                         )
                     {
-                        lastOperation = TradeTarget.toLong;
-                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        item.tradeTarget = TradeTarget.toLong;
+                        using (StreamWriter sw = new StreamWriter("_operation " + item.figi, true, System.Text.Encoding.Default))
                         {
-                            sw.WriteLine(DateTime.Now + @" Long " + item + "price " + bestAsk);
+                            sw.WriteLine(DateTime.Now + @" Long " + item.figi + "price " + bestAsk);
                             sw.WriteLine();
                         }
-                        Log.Information("Stop trade: " + item + " TradeOperation.toLong");
+                        Log.Information("Stop trade: " + item.figi + " TradeOperation.toLong");
                     }
 
                     if (gmmaDecision.TradeVariant() == TradeTarget.fromLong
                         &&
-                        (lastOperation == TradeTarget.toLong)
+                        (item.tradeTarget == TradeTarget.toLong)
                         )
                     {
-                        lastOperation = TradeTarget.fromLong;
-                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        item.tradeTarget = TradeTarget.fromLong;
+                        using (StreamWriter sw = new StreamWriter("_operation " + item.figi, true, System.Text.Encoding.Default))
                         {
-                            sw.WriteLine(DateTime.Now + @" FromLong " + item + "price " + bestBid);
+                            sw.WriteLine(DateTime.Now + @" FromLong " + item.figi + "price " + bestBid);
                             sw.WriteLine();
                         }
-                        Log.Information("Stop trade: " + item + " TradeOperation.fromLong");
+                        Log.Information("Stop trade: " + item.figi + " TradeOperation.fromLong");
                     }
 
                     if (gmmaDecision.TradeVariant() == TradeTarget.toShort
                         &&
-                        (lastOperation == TradeTarget.fromLong || lastOperation == TradeTarget.fromShort)
+                        (item.tradeTarget == TradeTarget.fromLong || item.tradeTarget == TradeTarget.fromShort)
                         )
                     {
-                        lastOperation = TradeTarget.toShort;
-                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        item.tradeTarget = TradeTarget.toShort;
+                        using (StreamWriter sw = new StreamWriter("_operation " + item.figi, true, System.Text.Encoding.Default))
                         {
-                            sw.WriteLine(DateTime.Now + @" ToShort " + item + "price " + bestBid);
+                            sw.WriteLine(DateTime.Now + @" ToShort " + item.figi + "price " + bestBid);
                             sw.WriteLine();
                         }
-                        Log.Information("Stop trade: " + item + " TradeOperation.toShort");
+                        Log.Information("Stop trade: " + item.figi + " TradeOperation.toShort");
                     }
 
                     if (gmmaDecision.TradeVariant() == TradeTarget.fromShort
                         &&
-                        (lastOperation == TradeTarget.toShort)
+                        (item.tradeTarget == TradeTarget.toShort)
                         )
                     {
-                        lastOperation = TradeTarget.fromShort;
-                        using (StreamWriter sw = new StreamWriter("_operation", true, System.Text.Encoding.Default))
+                        item.tradeTarget = TradeTarget.fromShort;
+                        using (StreamWriter sw = new StreamWriter("_operation " + item.figi, true, System.Text.Encoding.Default))
                         {
-                            sw.WriteLine(DateTime.Now + @" FromShort " + item + "price " + bestAsk);
+                            sw.WriteLine(DateTime.Now + @" FromShort " + item.figi + "price " + bestAsk);
                             sw.WriteLine();
                         }
-                        Log.Information("Stop trade: " + item + " TradeOperation.fromShort");
+                        Log.Information("Stop trade: " + item.figi + " TradeOperation.fromShort");
                     }
                 }
                 ///Test Algo
             }
         }
+    }
+    class TradeInstrument
+    { 
+        internal string figi { get; set; }
+        internal TradeTarget tradeTarget { get; set; }
     }
 }
