@@ -88,8 +88,8 @@ namespace tradeSDK
             ///Test Algo
             List<TradeInstrument> tradeInstrumentList = new List<TradeInstrument>();
 
-            CandleInterval candleInterval = CandleInterval.TwoMinutes;
-            int candlesCount = 70;
+            CandleInterval candleInterval = CandleInterval.FiveMinutes;
+            int candlesCount = 100;
             List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
             foreach (var item in Tickers)
             {
