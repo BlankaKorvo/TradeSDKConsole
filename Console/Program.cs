@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Serilog;
 using TinkoffAdapter.DataHelper;
 using DataCollector;
-using CandleInterval = MarketDataModules.CandleInterval;
+using CandleInterval = MarketDataModules.Models.Candles.CandleInterval;
 using MarketDataModules;
 using Analysis.Screeners;
 using System.Linq;
@@ -14,14 +14,15 @@ using MarketDataModules.Models.Candles;
 using TinkoffData;
 using Skender.Stock.Indicators;
 using TradingAlgorithms.IndicatorSignals;
-using Instrument = MarketDataModules.Instrument;
+using Instrument = MarketDataModules.Models.Instruments.Instrument;
 using LinqStatistics;
 using Analysis.Screeners.CandlesScreener;
 using Analysis.Screeners.Helpers;
-using TradeTarget = MarketDataModules.TradeTarget;
+using TradeTarget = MarketDataModules.Models.TradeTarget;
 using Analysis.TradeDecision;
 using Trader;
 using System.Threading;
+using MarketDataModules.Models;
 
 namespace tradeSDK
 {
@@ -91,7 +92,7 @@ namespace tradeSDK
 
             CandleInterval candleInterval = CandleInterval.Minute;
             int candlesCount = 100;
-            List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
+            List<string> Tickers = new List<string> { "AMZN"};
             foreach (var item in Tickers)
             {
                 var instrument = await marketDataCollector.GetInstrumentByTickerAsync(item);
@@ -102,21 +103,20 @@ namespace tradeSDK
 
             while (true)
             {
-                //int hour = DateTime.Now.Hour;
-                //int minutes = DateTime.Now.Minute;
-                //if
-                //    (
-                //    hour >= 11
-                //    &&
-                //    hour < 23
-                //    )
-                //{
+                int hour = DateTime.Now.Hour;
+                int minutes = DateTime.Now.Minute;
+                if
+                    (
+                    hour >= 17
+                    &&
+                    hour < 23
+                    )
+                {
                     await TestTrading(marketDataCollector, tradeInstrumentList, candleInterval, candlesCount);
-                //}
-                ///Test Algo
+                }
+
             }
         }
-
 
 
         private static async Task TestTrading(MarketDataCollector marketDataCollector, List<TradeInstrument> tradeInstrumentList, CandleInterval candleInterval, int candlesCount)
@@ -137,11 +137,13 @@ namespace tradeSDK
                 var bestAsk = orderbook.Asks.FirstOrDefault().Price;
                 var bestBid = orderbook.Bids.FirstOrDefault().Price;
 
-                GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+                //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+                GmmaDecisionOneMinutesShortLines gmmaDecisionOneMinutesShortLines = new GmmaDecisionOneMinutesShortLines () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+                var tradeVariant = gmmaDecisionOneMinutesShortLines.TradeVariant();
 
                 //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
 
-                if (gmmaDecision.TradeVariant() == TradeTarget.toLong
+                if (tradeVariant == TradeTarget.toLong
                     &&
                     (item.tradeTarget == TradeTarget.fromLong || item.tradeTarget == TradeTarget.fromShort)
                     )
@@ -155,7 +157,7 @@ namespace tradeSDK
                     Log.Information("Stop trade: " + item.figi + " TradeOperation.toLong");
                 }
 
-                if (gmmaDecision.TradeVariant() == TradeTarget.fromLong
+                if (tradeVariant == TradeTarget.fromLong
                     &&
                     (item.tradeTarget == TradeTarget.toLong)
                     )
@@ -169,7 +171,7 @@ namespace tradeSDK
                     Log.Information("Stop trade: " + item.figi + " TradeOperation.fromLong");
                 }
 
-                if (gmmaDecision.TradeVariant() == TradeTarget.toShort
+                if (tradeVariant == TradeTarget.toShort
                     &&
                     (item.tradeTarget == TradeTarget.fromLong || item.tradeTarget == TradeTarget.fromShort)
                     )
@@ -183,7 +185,7 @@ namespace tradeSDK
                     Log.Information("Stop trade: " + item.figi + " TradeOperation.toShort");
                 }
 
-                if (gmmaDecision.TradeVariant() == TradeTarget.fromShort
+                if (tradeVariant == TradeTarget.fromShort
                     &&
                     (item.tradeTarget == TradeTarget.toShort)
                     )
