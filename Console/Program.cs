@@ -23,6 +23,7 @@ using Analysis.TradeDecision;
 using Trader;
 using System.Threading;
 using MarketDataModules.Models;
+using MarketDataModules.Models.Portfolio;
 
 namespace tradeSDK
 {
@@ -44,7 +45,6 @@ namespace tradeSDK
             OrderbookScreener orderbookScreener = new OrderbookScreener();
             Signal signal = new Signal();
 
-
             /// AutoTrading
             //List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
             //List<Instrument> instruments = new List<Instrument>();
@@ -56,10 +56,7 @@ namespace tradeSDK
             //AutoTrading autoTrading = new AutoTrading() { CandleInterval = CandleInterval.TwoMinutes, CandlesCount = 70 };
             //await autoTrading.AutoTradingInstruments(instrumentList, 2);
             /// AutoTrading
-
-
-
-            
+                        
             ///// Screener OrderBook
             //InstrumentList instrumentList = await marketDataCollector.GetInstrumentListAsync();
             //List<Instrument> instrumentsUSD = (from instrument in instrumentList.Instruments
@@ -86,7 +83,6 @@ namespace tradeSDK
             //}
             ///// Screener OrderBook
 
-
             ///Test Algo
             List<TradeInstrument> tradeInstrumentList = new List<TradeInstrument>();
 
@@ -99,7 +95,6 @@ namespace tradeSDK
                 TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker };
                 tradeInstrumentList.Add(tradeInstrument);
             }
-
 
             while (true)
             {
@@ -118,7 +113,6 @@ namespace tradeSDK
             }
         }
 
-
         private static async Task TestTrading(MarketDataCollector marketDataCollector, List<TradeInstrument> tradeInstrumentList, CandleInterval candleInterval, int candlesCount)
         {
             foreach (var item in tradeInstrumentList)
@@ -132,14 +126,24 @@ namespace tradeSDK
                     continue;
                 }
 
-                var candleList = await marketDataCollector.GetCandlesAsync(item.figi, candleInterval, candlesCount);
-
                 var bestAsk = orderbook.Asks.FirstOrDefault().Price;
                 var bestBid = orderbook.Bids.FirstOrDefault().Price;
 
-                //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
-                GmmaDecisionOneMinutesShortLines gmmaDecisionOneMinutesShortLines = new GmmaDecisionOneMinutesShortLines () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
-                var tradeVariant = gmmaDecisionOneMinutesShortLines.TradeVariant();
+                var candleList = await marketDataCollector.GetCandlesAsync(item.figi, candleInterval, candlesCount);
+
+                Portfolio portfolio = await marketDataCollector.GetPortfolioAsync();
+                Portfolio.Position portfolioPosition = null;
+                foreach (Portfolio.Position itemP in portfolio.Positions)
+                {
+                    if (itemP.Figi == item.figi)
+                    {
+                       portfolioPosition = itemP;
+                    }
+                }
+
+                    //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+                    GmmaDecisionOneMinutes gmmaDecisionOneMinutes = new GmmaDecisionOneMinutes () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition };
+                var tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
 
                 //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
 
@@ -149,11 +153,13 @@ namespace tradeSDK
                     )
                 {
                     item.tradeTarget = TradeTarget.toLong;
+
                     using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" Long " + item.ticker + "price " + bestAsk);
                         sw.WriteLine();
                     }
+
                     Log.Information("Stop trade: " + item.figi + " TradeOperation.toLong");
                 }
 
