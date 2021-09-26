@@ -92,7 +92,7 @@ namespace tradeSDK
             foreach (var item in Tickers)
             {
                 var instrument = await marketDataCollector.GetInstrumentByTickerAsync(item);
-                TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker };
+                TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker , MoneyAmountT = null};
                 tradeInstrumentList.Add(tradeInstrument);
             }
 
@@ -132,17 +132,20 @@ namespace tradeSDK
                 var candleList = await marketDataCollector.GetCandlesAsync(item.figi, candleInterval, candlesCount);
 
                 Portfolio portfolio = await marketDataCollector.GetPortfolioAsync();
-                Portfolio.Position portfolioPosition = null;
+                Portfolio.Position position = null;
                 foreach (Portfolio.Position itemP in portfolio.Positions)
                 {
                     if (itemP.Figi == item.figi)
                     {
-                       portfolioPosition = itemP;
+                        position = itemP;
                     }
                 }
+                MoneyAmount averagePositionPrice = item.MoneyAmountT;
 
-                    //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
-                    GmmaDecisionOneMinutes gmmaDecisionOneMinutes = new GmmaDecisionOneMinutes () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition };
+                Portfolio.Position portfolioPosition = new Portfolio.Position(position.Name, position.Figi, position.Ticker, position.Isin, position.InstrumentType, position.Balance, position.Blocked, position.ExpectedYield, position.Lots, averagePositionPrice, position.AveragePositionPriceNoNkd); 
+
+                                    //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+                GmmaDecisionOneMinutes gmmaDecisionOneMinutes = new GmmaDecisionOneMinutes () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition };
                 var tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
 
                 //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
@@ -153,6 +156,7 @@ namespace tradeSDK
                     )
                 {
                     item.tradeTarget = TradeTarget.toLong;
+                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestAsk);
 
                     using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
                     {
@@ -183,6 +187,7 @@ namespace tradeSDK
                     )
                 {
                     item.tradeTarget = TradeTarget.toShort;
+                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestBid);
                     using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" ToShort " + item.ticker + "price " + bestBid);
@@ -212,5 +217,6 @@ namespace tradeSDK
         internal string figi { get; set; }
         internal string ticker { get; set; }
         internal TradeTarget tradeTarget { get; set; }
+        internal MoneyAmount MoneyAmountT { get; set; }
     }
 }
