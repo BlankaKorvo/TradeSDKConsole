@@ -24,6 +24,7 @@ using Trader;
 using System.Threading;
 using MarketDataModules.Models;
 using MarketDataModules.Models.Portfolio;
+using MarketDataModules.Models.Operation;
 
 namespace tradeSDK
 {
@@ -85,6 +86,8 @@ namespace tradeSDK
 
             ///Test Algo
             List<TradeInstrument> tradeInstrumentList = new List<TradeInstrument>();
+            TradeOperation tradeOperation = null;
+            Portfolio.Position portfolioPosition = null;
 
             CandleInterval candleInterval = CandleInterval.Minute;
             int candlesCount = 100;
@@ -92,33 +95,34 @@ namespace tradeSDK
             foreach (var item in Tickers)
             {
                 var instrument = await marketDataCollector.GetInstrumentByTickerAsync(item);
-                TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker , MoneyAmountT = null};
+                TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker};
+                //LastTransactionModel lastTransactionModel = new LastTransactionModel() {Figi = instrument.Figi, TradeOperation = TradeOperation. }
                 tradeInstrumentList.Add(tradeInstrument);
             }
 
             while (true)
             {
-                int hour = DateTime.Now.Hour;
-                int minutes = DateTime.Now.Minute;
-                if
-                    (
-                    hour >= 17
-                    &&
-                    hour < 23
-                    )
-                {
-                    await TestTrading(marketDataCollector, tradeInstrumentList, candleInterval, candlesCount);
-                }
+                //int hour = DateTime.Now.Hour;
+                //int minutes = DateTime.Now.Minute;
+                //if
+                //    (
+                //    hour >= 17
+                //    &&
+                //    hour < 23
+                //    )
+                //{
+                    TestTrading(marketDataCollector, ref tradeInstrumentList, candleInterval, candlesCount, ref tradeOperation, ref portfolioPosition);
+                //}
 
             }
         }
 
-        private static async Task TestTrading(MarketDataCollector marketDataCollector, List<TradeInstrument> tradeInstrumentList, CandleInterval candleInterval, int candlesCount)
+        private static void TestTrading(MarketDataCollector marketDataCollector,ref  List<TradeInstrument> tradeInstrumentList, CandleInterval candleInterval, int candlesCount, ref TradeOperation tradeOperation, ref Portfolio.Position portfolioPosition)
         {
             foreach (var item in tradeInstrumentList)
             {
                 Log.Information("Start trade: " + item.figi);
-                var orderbook = await marketDataCollector.GetOrderbookAsync(item.figi, Provider.Tinkoff, 20);
+                var orderbook = marketDataCollector.GetOrderbookAsync(item.figi, Provider.Tinkoff, 20).GetAwaiter().GetResult();
 
                 if (orderbook == null)
                 {
@@ -129,9 +133,13 @@ namespace tradeSDK
                 var bestAsk = orderbook.Asks.FirstOrDefault().Price;
                 var bestBid = orderbook.Bids.FirstOrDefault().Price;
 
-                var candleList = await marketDataCollector.GetCandlesAsync(item.figi, candleInterval, candlesCount);
+                var candleList = marketDataCollector.GetCandlesAsync(item.figi, candleInterval, candlesCount).GetAwaiter().GetResult();
 
-                Portfolio portfolio = await marketDataCollector.GetPortfolioAsync();
+                Portfolio portfolio = marketDataCollector.GetPortfolioAsync().GetAwaiter().GetResult();
+                List<TradeOperation> tradeOperations = marketDataCollector.GetOperationsAsync(item.figi, DateTime.Now, DateTime.Now.AddDays(-100)).GetAwaiter().GetResult();
+
+                tradeOperations.Add(tradeOperation);
+
                 Portfolio.Position position = null;
                 foreach (Portfolio.Position itemP in portfolio.Positions)
                 {
@@ -140,12 +148,17 @@ namespace tradeSDK
                         position = itemP;
                     }
                 }
+                List<TradeOperation> tradeOperationResult = (from tradeOperationThis in tradeOperations
+                                                 where tradeOperationThis?.Figi == item.figi
+                                                 orderby tradeOperationThis.Date
+                                                 select tradeOperationThis).ToList();
+
+
                 MoneyAmount averagePositionPrice = item.MoneyAmountT;
 
-                Portfolio.Position portfolioPosition = new Portfolio.Position(position.Name, position.Figi, position.Ticker, position.Isin, position.InstrumentType, position.Balance, position.Blocked, position.ExpectedYield, position.Lots, averagePositionPrice, position.AveragePositionPriceNoNkd); 
-
-                                    //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
-                GmmaDecisionOneMinutes gmmaDecisionOneMinutes = new GmmaDecisionOneMinutes () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition };
+                portfolioPosition = new Portfolio.Position(position.Name, position.Figi, position.Ticker, position.Isin, position.InstrumentType, position.Balance, position.Blocked, position.ExpectedYield, position.Lots, averagePositionPrice, position.AveragePositionPriceNoNkd);
+                //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+                GmmaDecisionOneMinutes gmmaDecisionOneMinutes = new GmmaDecisionOneMinutes () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
                 var tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
 
                 //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
@@ -157,6 +170,7 @@ namespace tradeSDK
                 {
                     item.tradeTarget = TradeTarget.toLong;
                     item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestAsk);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.figi, default, default, DateTime.Now, default);
 
                     using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
                     {
@@ -173,6 +187,8 @@ namespace tradeSDK
                     )
                 {
                     item.tradeTarget = TradeTarget.fromLong;
+                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestBid);
+
                     using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" FromLong " + item.ticker + "price " + bestBid);
@@ -188,6 +204,7 @@ namespace tradeSDK
                 {
                     item.tradeTarget = TradeTarget.toShort;
                     item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestBid);
+
                     using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" ToShort " + item.ticker + "price " + bestBid);
@@ -202,6 +219,8 @@ namespace tradeSDK
                     )
                 {
                     item.tradeTarget = TradeTarget.fromShort;
+                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestAsk);
+
                     using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" FromShort " + item.ticker + "price " + bestAsk);
@@ -218,5 +237,6 @@ namespace tradeSDK
         internal string ticker { get; set; }
         internal TradeTarget tradeTarget { get; set; }
         internal MoneyAmount MoneyAmountT { get; set; }
+        internal DateTime dateTime { get; set; }
     }
 }
