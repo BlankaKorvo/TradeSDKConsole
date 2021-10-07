@@ -57,7 +57,7 @@ namespace tradeSDK
             //AutoTrading autoTrading = new AutoTrading() { CandleInterval = CandleInterval.TwoMinutes, CandlesCount = 70 };
             //await autoTrading.AutoTradingInstruments(instrumentList, 2);
             /// AutoTrading
-                        
+
             ///// Screener OrderBook
             //InstrumentList instrumentList = await marketDataCollector.GetInstrumentListAsync();
             //List<Instrument> instrumentsUSD = (from instrument in instrumentList.Instruments
@@ -85,9 +85,11 @@ namespace tradeSDK
             ///// Screener OrderBook
 
             ///Test Algo
-            List<TradeInstrument> tradeInstrumentList = new List<TradeInstrument>();
+            //List<TradeInstrument> tradeInstrumentList = new List<TradeInstrument>();
+            List<Instrument> instrumentList = new List<Instrument>();
             TradeOperation tradeOperation = null;
             Portfolio.Position portfolioPosition = null;
+            TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
             CandleInterval candleInterval = CandleInterval.Minute;
             int candlesCount = 100;
@@ -95,9 +97,9 @@ namespace tradeSDK
             foreach (var item in Tickers)
             {
                 var instrument = await marketDataCollector.GetInstrumentByTickerAsync(item);
-                TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker};
+                //TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker};
                 //LastTransactionModel lastTransactionModel = new LastTransactionModel() {Figi = instrument.Figi, TradeOperation = TradeOperation. }
-                tradeInstrumentList.Add(tradeInstrument);
+                instrumentList.Add(instrument);
             }
 
             while (true)
@@ -111,18 +113,17 @@ namespace tradeSDK
                 //    hour < 23
                 //    )
                 //{
-                    TestTrading(marketDataCollector, ref tradeInstrumentList, candleInterval, candlesCount, ref tradeOperation, ref portfolioPosition);
-                //}
+                TestTrading(marketDataCollector, instrumentList, candleInterval, candlesCount, ref tradeOperation, ref portfolioPosition, ref lastTradeTarget);
 
             }
         }
 
-        private static void TestTrading(MarketDataCollector marketDataCollector,ref  List<TradeInstrument> tradeInstrumentList, CandleInterval candleInterval, int candlesCount, ref TradeOperation tradeOperation, ref Portfolio.Position portfolioPosition)
+        private static void TestTrading(MarketDataCollector marketDataCollector, List<Instrument> instrumentList, CandleInterval candleInterval, int candlesCount, ref TradeOperation tradeOperation, ref Portfolio.Position portfolioPosition, ref TradeTarget lastTradeTarget)
         {
-            foreach (var item in tradeInstrumentList)
+            foreach (var item in instrumentList)
             {
-                Log.Information("Start trade: " + item.figi);
-                var orderbook = marketDataCollector.GetOrderbookAsync(item.figi, Provider.Tinkoff, 20).GetAwaiter().GetResult();
+                Log.Information("Start trade: " + item.Figi);
+                var orderbook = marketDataCollector.GetOrderbookAsync(item.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
 
                 if (orderbook == null)
                 {
@@ -133,110 +134,103 @@ namespace tradeSDK
                 var bestAsk = orderbook.Asks.FirstOrDefault().Price;
                 var bestBid = orderbook.Bids.FirstOrDefault().Price;
 
-                var candleList = marketDataCollector.GetCandlesAsync(item.figi, candleInterval, candlesCount).GetAwaiter().GetResult();
+                var candleList = marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, candlesCount).GetAwaiter().GetResult();
 
-                Portfolio portfolio = marketDataCollector.GetPortfolioAsync().GetAwaiter().GetResult();
-                List<TradeOperation> tradeOperations = marketDataCollector.GetOperationsAsync(item.figi, DateTime.Now, DateTime.Now.AddDays(-100)).GetAwaiter().GetResult();
+                //Portfolio portfolio = marketDataCollector.GetPortfolioAsync().GetAwaiter().GetResult();
+                //List<TradeOperation> tradeOperations = marketDataCollector.GetOperationsAsync(item.figi, DateTime.Now, DateTime.Now.AddDays(-100)).GetAwaiter().GetResult();
+                //List<TradeOperation> tradeOperations = new List<TradeOperation>();
+                //tradeOperations.Add(tradeOperation);
 
-                tradeOperations.Add(tradeOperation);
+                //Portfolio.Position position = null;
+                //foreach (Portfolio.Position itemP in portfolio.Positions)
+                //{
+                //    if (itemP.Figi == item.figi)
+                //    {
+                //        position = itemP;
+                //    }
+                //}
+                List<TradeOperation> tradeOperationResult = new List<TradeOperation>();
+                tradeOperationResult.Add(tradeOperation);
 
-                Portfolio.Position position = null;
-                foreach (Portfolio.Position itemP in portfolio.Positions)
-                {
-                    if (itemP.Figi == item.figi)
-                    {
-                        position = itemP;
-                    }
-                }
-                List<TradeOperation> tradeOperationResult = (from tradeOperationThis in tradeOperations
-                                                 where tradeOperationThis?.Figi == item.figi
-                                                 orderby tradeOperationThis.Date
-                                                 select tradeOperationThis).ToList();
-
-
-                MoneyAmount averagePositionPrice = item.MoneyAmountT;
-
-                portfolioPosition = new Portfolio.Position(position.Name, position.Figi, position.Ticker, position.Isin, position.InstrumentType, position.Balance, position.Blocked, position.ExpectedYield, position.Lots, averagePositionPrice, position.AveragePositionPriceNoNkd);
+                //MoneyAmount averagePositionPrice = item.MoneyAmountT;
+                //List<TradeOperation> tradeOperationResult = new List<TradeOperation> { tradeOperation };
+                //portfolioPosition = new Portfolio.Position(portfolioPosition.Name, portfolioPosition.Figi, portfolioPosition.Ticker, portfolioPosition.Isin, portfolioPosition.InstrumentType, portfolioPosition.Balance, portfolioPosition.Blocked, portfolioPosition.ExpectedYield, portfolioPosition.Lots, averagePositionPrice, portfolioPosition.AveragePositionPriceNoNkd);
                 //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
                 GmmaDecisionOneMinutes gmmaDecisionOneMinutes = new GmmaDecisionOneMinutes () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
-                var tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
+                TradeTarget tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
 
                 //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
 
                 if (tradeVariant == TradeTarget.toLong
                     &&
-                    (item.tradeTarget == TradeTarget.fromLong || item.tradeTarget == TradeTarget.fromShort)
+                    portfolioPosition == null
                     )
                 {
-                    item.tradeTarget = TradeTarget.toLong;
-                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestAsk);
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.figi, default, default, DateTime.Now, default);
+                    int countBalance = 1;
+                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
 
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
+                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
-                        sw.WriteLine(DateTime.Now + @" Long " + item.ticker + "price " + bestAsk);
+                        sw.WriteLine(DateTime.Now + @" Long " + item.Ticker + "price " + bestAsk);
                         sw.WriteLine();
                     }
 
-                    Log.Information("Stop trade: " + item.figi + " TradeOperation.toLong");
+                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.toLong");
                 }
 
                 if (tradeVariant == TradeTarget.fromLong
                     &&
-                    (item.tradeTarget == TradeTarget.toLong)
-                    )
+                    portfolioPosition?.Balance > 0)
+                   
                 {
-                    item.tradeTarget = TradeTarget.fromLong;
-                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestBid);
-
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
+                    portfolioPosition = null;
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
+                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
-                        sw.WriteLine(DateTime.Now + @" FromLong " + item.ticker + "price " + bestBid);
+                        sw.WriteLine(DateTime.Now + @" FromLong " + item.Ticker + "price " + bestBid);
                         sw.WriteLine();
                     }
-                    Log.Information("Stop trade: " + item.figi + " TradeOperation.fromLong");
+                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.fromLong");
                 }
 
                 if (tradeVariant == TradeTarget.toShort
                     &&
-                    (item.tradeTarget == TradeTarget.fromLong || item.tradeTarget == TradeTarget.fromShort)
+                    portfolioPosition == null
                     )
                 {
-                    item.tradeTarget = TradeTarget.toShort;
-                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestBid);
 
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
+                    int countBalance = -1;
+                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
+                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
-                        sw.WriteLine(DateTime.Now + @" ToShort " + item.ticker + "price " + bestBid);
+                        sw.WriteLine(DateTime.Now + @" ToShort " + item.Ticker + "price " + bestBid);
                         sw.WriteLine();
                     }
-                    Log.Information("Stop trade: " + item.figi + " TradeOperation.toShort");
+                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.toShort");
                 }
 
                 if (tradeVariant == TradeTarget.fromShort
                     &&
-                    (item.tradeTarget == TradeTarget.toShort)
+                    portfolioPosition?.Balance < 0
                     )
                 {
-                    item.tradeTarget = TradeTarget.fromShort;
-                    item.MoneyAmountT = new MoneyAmount(Currency.Usd, bestAsk);
+                    int countBalance = 0;
+                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
 
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.ticker, true, System.Text.Encoding.Default))
+
+                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
-                        sw.WriteLine(DateTime.Now + @" FromShort " + item.ticker + "price " + bestAsk);
+                        sw.WriteLine(DateTime.Now + @" FromShort " + item.Ticker + "price " + bestAsk);
                         sw.WriteLine();
                     }
-                    Log.Information("Stop trade: " + item.figi + " TradeOperation.fromShort");
+                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.fromShort");
                 }
+                lastTradeTarget = tradeVariant;
             }
         }
     }
-    class TradeInstrument
-    { 
-        internal string figi { get; set; }
-        internal string ticker { get; set; }
-        internal TradeTarget tradeTarget { get; set; }
-        internal MoneyAmount MoneyAmountT { get; set; }
-        internal DateTime dateTime { get; set; }
-    }
+
 }
