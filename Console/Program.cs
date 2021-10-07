@@ -91,7 +91,7 @@ namespace tradeSDK
             Portfolio.Position portfolioPosition = null;
             TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
-            CandleInterval candleInterval = CandleInterval.Minute;
+            CandleInterval candleInterval = CandleInterval.FiveMinutes;
             int candlesCount = 100;
             List<string> Tickers = new List<string> { "AMZN"};
             foreach (var item in Tickers)
@@ -156,7 +156,7 @@ namespace tradeSDK
                 //List<TradeOperation> tradeOperationResult = new List<TradeOperation> { tradeOperation };
                 //portfolioPosition = new Portfolio.Position(portfolioPosition.Name, portfolioPosition.Figi, portfolioPosition.Ticker, portfolioPosition.Isin, portfolioPosition.InstrumentType, portfolioPosition.Balance, portfolioPosition.Blocked, portfolioPosition.ExpectedYield, portfolioPosition.Lots, averagePositionPrice, portfolioPosition.AveragePositionPriceNoNkd);
                 //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
-                GmmaDecisionOneMinutes gmmaDecisionOneMinutes = new GmmaDecisionOneMinutes () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
+                GmmaDecision gmmaDecisionOneMinutes = new GmmaDecision () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
                 TradeTarget tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
 
                 //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
@@ -227,7 +227,6 @@ namespace tradeSDK
                     }
                     Log.Information("Stop trade: " + item.Figi + " TradeOperation.fromShort");
                 }
-                lastTradeTarget = tradeVariant;
             }
         }
     }
