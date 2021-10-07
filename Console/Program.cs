@@ -185,7 +185,7 @@ namespace tradeSDK
                    
                 {
                     portfolioPosition = null;
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now, default);
                     using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" FromLong " + item.Ticker + "price " + bestBid);
@@ -201,8 +201,8 @@ namespace tradeSDK
                 {
 
                     int countBalance = -1;
-                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
+                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestBid), countBalance, new MoneyAmount(Currency.Usd, bestBid), default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now, default);
                     using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" ToShort " + item.Ticker + "price " + bestBid);
@@ -216,8 +216,7 @@ namespace tradeSDK
                     portfolioPosition?.Balance < 0
                     )
                 {
-                    int countBalance = 0;
-                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
+                    portfolioPosition = null;
                     tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
 
 
