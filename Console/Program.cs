@@ -91,7 +91,7 @@ namespace tradeSDK
             Portfolio.Position portfolioPosition = null;
             TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
-            CandleInterval candleInterval = CandleInterval.FiveMinutes;
+            CandleInterval candleInterval = CandleInterval.QuarterHour;
             int candlesCount = 100;
             List<string> Tickers = new List<string> { "AMZN"};
             foreach (var item in Tickers)
@@ -168,7 +168,7 @@ namespace tradeSDK
                 {
                     int countBalance = 1;
                     portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
 
                     using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
@@ -185,7 +185,7 @@ namespace tradeSDK
                    
                 {
                     portfolioPosition = null;
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now, default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
                     using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" FromLong " + item.Ticker + "price " + bestBid);
@@ -202,7 +202,7 @@ namespace tradeSDK
 
                     int countBalance = -1;
                     portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestBid), countBalance, new MoneyAmount(Currency.Usd, bestBid), default);
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now, default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
                     using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" ToShort " + item.Ticker + "price " + bestBid);
@@ -217,7 +217,7 @@ namespace tradeSDK
                     )
                 {
                     portfolioPosition = null;
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now, default);
+                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
 
 
                     using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
