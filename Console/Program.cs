@@ -25,6 +25,7 @@ using System.Threading;
 using MarketDataModules.Models;
 using MarketDataModules.Models.Portfolio;
 using MarketDataModules.Models.Operation;
+using System.Reflection;
 
 namespace tradeSDK
 {
@@ -35,7 +36,7 @@ namespace tradeSDK
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
-                .WriteTo.File("logs\\myapp.txt", rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
+                .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
             MarketDataCollector marketDataCollector = new MarketDataCollector();
             GetStocksHistory getStocksHistory = new GetStocksHistory();
@@ -85,7 +86,12 @@ namespace tradeSDK
             ///// Screener OrderBook
 
             ///Test Algo
-            //List<TradeInstrument> tradeInstrumentList = new List<TradeInstrument>();
+
+            using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test1"), true, System.Text.Encoding.Default))
+            {
+                sw.WriteLine("test");
+                sw.WriteLine();
+            }
             List<Instrument> instrumentList = new List<Instrument>();
             TradeOperation tradeOperation = null;
             Portfolio.Position portfolioPosition = null;
@@ -113,7 +119,15 @@ namespace tradeSDK
                 //    hour < 23
                 //    )
                 //{
-                TestTrading(marketDataCollector, instrumentList, candleInterval, candlesCount, ref tradeOperation, ref portfolioPosition, ref lastTradeTarget);
+                try
+                {
+                    TestTrading(marketDataCollector, instrumentList, candleInterval, candlesCount, ref tradeOperation, ref portfolioPosition, ref lastTradeTarget);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.Message);
+                    Log.Error(ex.StackTrace);
+                }
 
             }
         }
@@ -156,7 +170,7 @@ namespace tradeSDK
                 //List<TradeOperation> tradeOperationResult = new List<TradeOperation> { tradeOperation };
                 //portfolioPosition = new Portfolio.Position(portfolioPosition.Name, portfolioPosition.Figi, portfolioPosition.Ticker, portfolioPosition.Isin, portfolioPosition.InstrumentType, portfolioPosition.Balance, portfolioPosition.Blocked, portfolioPosition.ExpectedYield, portfolioPosition.Lots, averagePositionPrice, portfolioPosition.AveragePositionPriceNoNkd);
                 //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
-                GmmaDecision gmmaDecisionOneMinutes = new GmmaDecision () { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
+                GmmaDecision gmmaDecisionOneMinutes = new GmmaDecision () { candleListMin = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
                 TradeTarget tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
 
                 //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
@@ -170,7 +184,7 @@ namespace tradeSDK
                     portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
                     tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
 
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
+                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" Long " + item.Ticker + "price " + bestAsk);
                         sw.WriteLine();
@@ -186,7 +200,7 @@ namespace tradeSDK
                 {
                     portfolioPosition = null;
                     tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
+                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" FromLong " + item.Ticker + "price " + bestBid);
                         sw.WriteLine();
@@ -203,7 +217,7 @@ namespace tradeSDK
                     int countBalance = -1;
                     portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestBid), countBalance, new MoneyAmount(Currency.Usd, bestBid), default);
                     tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
+                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" ToShort " + item.Ticker + "price " + bestBid);
                         sw.WriteLine();
@@ -220,7 +234,7 @@ namespace tradeSDK
                     tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
 
 
-                    using (StreamWriter sw = new StreamWriter("_operation " + item.Ticker, true, System.Text.Encoding.Default))
+                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(DateTime.Now + @" FromShort " + item.Ticker + "price " + bestAsk);
                         sw.WriteLine();
