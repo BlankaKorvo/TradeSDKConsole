@@ -86,20 +86,29 @@ namespace tradeSDK
             ///// Screener OrderBook
 
             ///Test Algo
+            ///
+            //string tic = "APA";
+            //var ins = await marketDataCollector.GetInstrumentByTickerAsync(tic);
+            //var f = ins.Figi;
+            //var candlesD = marketDataCollector.GetCandlesAsync(f, CandleInterval.Hour, 1000).GetAwaiter().GetResult();
 
-            using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test1"), true, System.Text.Encoding.Default))
-            {
-                sw.WriteLine("test");
-                sw.WriteLine();
-            }
+            //using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "testData.csv"), true, System.Text.Encoding.Default))
+            //{
+            //    foreach (var item in candlesD.Candles)
+            //    {
+            //        sw.WriteLine("{0},{1},{2},{3},{4},{5}\n", item.Time.ToString(), item.Open.ToString(), item.High.ToString(), item.Low.ToString(), item.Close.ToString(), item.Volume.ToString());
+            //    }
+            //}
+
+            Console.ReadKey();
             List<Instrument> instrumentList = new List<Instrument>();
             TradeOperation tradeOperation = null;
             Portfolio.Position portfolioPosition = null;
             TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
-            CandleInterval candleInterval = CandleInterval.QuarterHour;
+            CandleInterval candleInterval = CandleInterval.Hour;
             int candlesCount = 100;
-            List<string> Tickers = new List<string> { "AMZN"};
+            List<string> Tickers = new List<string> {"AMZN"};
             foreach (var item in Tickers)
             {
                 var instrument = await marketDataCollector.GetInstrumentByTickerAsync(item);
