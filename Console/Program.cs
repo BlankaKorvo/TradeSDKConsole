@@ -2,30 +2,33 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Serilog;
-using TinkoffAdapter.DataHelper;
+
 using DataCollector;
 using CandleInterval = MarketDataModules.Models.Candles.CandleInterval;
 using MarketDataModules;
-using Analysis.Screeners;
+
 using System.Linq;
 using System.IO;
-using TinkoffAdapter.Authority;
+
 using MarketDataModules.Models.Candles;
-using TinkoffData;
+
 using Skender.Stock.Indicators;
-using TradingAlgorithms.IndicatorSignals;
+
 using Instrument = MarketDataModules.Models.Instruments.Instrument;
 using LinqStatistics;
-using Analysis.Screeners.CandlesScreener;
-using Analysis.Screeners.Helpers;
+
 using TradeTarget = MarketDataModules.Models.TradeTarget;
-using Analysis.TradeDecision;
+
 using Trader;
 using System.Threading;
 using MarketDataModules.Models;
 using MarketDataModules.Models.Portfolio;
 using MarketDataModules.Models.Operation;
 using System.Reflection;
+using Analysis.Screeners.Helpers;
+using Analysis.Screeners.StockExchangeDataScreener;
+using Analysis.Signals;
+using Analysis.TradeDecision;
 
 namespace tradeSDK
 {
