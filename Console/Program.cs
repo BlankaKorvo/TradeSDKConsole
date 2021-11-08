@@ -29,6 +29,7 @@ using Analysis.Screeners.Helpers;
 using Analysis.Screeners.StockExchangeDataScreener;
 using Analysis.Signals;
 using Analysis.TradeDecision;
+using MarketDataModules.Models.Orderbooks;
 
 namespace tradeSDK
 {
@@ -38,7 +39,7 @@ namespace tradeSDK
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.Console()
+                //.WriteTo.Console()
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
             MarketDataCollector marketDataCollector = new MarketDataCollector();
@@ -103,37 +104,44 @@ namespace tradeSDK
             //    }
             //}
 
-            Console.ReadKey();
-            List<Instrument> instrumentList = new List<Instrument>();
+            //Console.ReadKey();
+            //List<Instrument> instrumentList = new List<Instrument>();
             TradeOperation tradeOperation = null;
             Portfolio.Position portfolioPosition = null;
-            TradeTarget lastTradeTarget = TradeTarget.fromLong;
+            List<(decimal, decimal)> margin = new List<(decimal, decimal)>();
+            //TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
             CandleInterval candleInterval = CandleInterval.Hour;
-            int candlesCount = 100;
-            List<string> Tickers = new List<string> {"AMZN"};
-            foreach (var item in Tickers)
+            int candlesCount = 250;
+            var instrument = await marketDataCollector.GetInstrumentByTickerAsync("amzn");
+
+            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, CandleInterval.Minute, 20000);
+            for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
-                var instrument = await marketDataCollector.GetInstrumentByTickerAsync(item);
-                //TradeInstrument tradeInstrument = new TradeInstrument() { figi = instrument.Figi, tradeTarget = TradeTarget.fromLong, ticker = instrument.Ticker};
-                //LastTransactionModel lastTransactionModel = new LastTransactionModel() {Figi = instrument.Figi, TradeOperation = TradeOperation. }
-                instrumentList.Add(instrument);
+                CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).ToList());
+                Orderbook orderbook = marketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
+                TestTrading(orderbook, notRealTimeCandleList, ref tradeOperation, ref portfolioPosition, ref margin, false);
             }
+
+            Console.WriteLine(margin.Sum(x => x.Item1));
+            Console.WriteLine(margin.Sum(x => x.Item2));
+
+            Console.ReadKey();
+
 
             while (true)
             {
-                //int hour = DateTime.Now.Hour;
-                //int minutes = DateTime.Now.Minute;
-                //if
-                //    (
-                //    hour >= 17
-                //    &&
-                //    hour < 23
-                //    )
-                //{
                 try
                 {
-                    TestTrading(marketDataCollector, instrumentList, candleInterval, candlesCount, ref tradeOperation, ref portfolioPosition, ref lastTradeTarget);
+                    Orderbook orderbook = marketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
+                    if (orderbook == null)
+                    {
+                        Log.Information("Orderbook null");
+                        continue;
+                    }
+                    CandlesList candleList = marketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, candlesCount).GetAwaiter().GetResult();
+
+                    TestTrading(orderbook, candleList, ref tradeOperation, ref portfolioPosition, ref margin);
                 }
                 catch (Exception ex)
                 {
@@ -144,116 +152,157 @@ namespace tradeSDK
             }
         }
 
-        private static void TestTrading(MarketDataCollector marketDataCollector, List<Instrument> instrumentList, CandleInterval candleInterval, int candlesCount, ref TradeOperation tradeOperation, ref Portfolio.Position portfolioPosition, ref TradeTarget lastTradeTarget)
+        private static void TestTrading(Orderbook orderbook, CandlesList candleList, ref TradeOperation tradeOperation, ref Portfolio.Position portfolioPosition, ref List<(decimal, decimal)> margin, bool realTime=true)
         {
-            foreach (var item in instrumentList)
+            //foreach (var item in instrumentList)
+            //{
+            Log.Information("Start trade: " + candleList.Figi);
+            //var orderbook = marketDataCollector.GetOrderbookAsync(item.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
+
+            //if (orderbook == null)
+            //{
+            //    Log.Information("Orderbook null");
+            //    continue;
+            //}
+            decimal bestAsk = candleList.Candles.Last().Close;
+            decimal bestBid = bestAsk;
+
+            if (realTime)
             {
-                Log.Information("Start trade: " + item.Figi);
-                var orderbook = marketDataCollector.GetOrderbookAsync(item.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
 
-                if (orderbook == null)
-                {
-                    Log.Information("Orderbook null");
-                    continue;
-                }
-
-                var bestAsk = orderbook.Asks.FirstOrDefault().Price;
-                var bestBid = orderbook.Bids.FirstOrDefault().Price;
-
-                var candleList = marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, candlesCount).GetAwaiter().GetResult();
-
-                //Portfolio portfolio = marketDataCollector.GetPortfolioAsync().GetAwaiter().GetResult();
-                //List<TradeOperation> tradeOperations = marketDataCollector.GetOperationsAsync(item.figi, DateTime.Now, DateTime.Now.AddDays(-100)).GetAwaiter().GetResult();
-                //List<TradeOperation> tradeOperations = new List<TradeOperation>();
-                //tradeOperations.Add(tradeOperation);
-
-                //Portfolio.Position position = null;
-                //foreach (Portfolio.Position itemP in portfolio.Positions)
-                //{
-                //    if (itemP.Figi == item.figi)
-                //    {
-                //        position = itemP;
-                //    }
-                //}
-                List<TradeOperation> tradeOperationResult = new List<TradeOperation>();
-                tradeOperationResult.Add(tradeOperation);
-
-                //MoneyAmount averagePositionPrice = item.MoneyAmountT;
-                //List<TradeOperation> tradeOperationResult = new List<TradeOperation> { tradeOperation };
-                //portfolioPosition = new Portfolio.Position(portfolioPosition.Name, portfolioPosition.Figi, portfolioPosition.Ticker, portfolioPosition.Isin, portfolioPosition.InstrumentType, portfolioPosition.Balance, portfolioPosition.Blocked, portfolioPosition.ExpectedYield, portfolioPosition.Lots, averagePositionPrice, portfolioPosition.AveragePositionPriceNoNkd);
-                //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
-                GmmaDecision gmmaDecisionOneMinutes = new GmmaDecision () { candleListMin = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
-                TradeTarget tradeVariant = gmmaDecisionOneMinutes.TradeVariant();
-
-                //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
-
-                if (tradeVariant == TradeTarget.toLong
-                    &&
-                    portfolioPosition == null
-                    )
-                {
-                    int countBalance = 1;
-                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-
-                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
-                    {
-                        sw.WriteLine(DateTime.Now + @" Long " + item.Ticker + "price " + bestAsk);
-                        sw.WriteLine();
-                    }
-
-                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.toLong");
-                }
-
-                if (tradeVariant == TradeTarget.fromLong
-                    &&
-                    portfolioPosition?.Balance > 0)
-                   
-                {
-                    portfolioPosition = null;
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
-                    {
-                        sw.WriteLine(DateTime.Now + @" FromLong " + item.Ticker + "price " + bestBid);
-                        sw.WriteLine();
-                    }
-                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.fromLong");
-                }
-
-                if (tradeVariant == TradeTarget.toShort
-                    &&
-                    portfolioPosition == null
-                    )
-                {
-
-                    int countBalance = -1;
-                    portfolioPosition = new Portfolio.Position(default, item.Figi, item.Ticker, item.Isin, default, countBalance, default, new MoneyAmount(Currency.Usd, bestBid), countBalance, new MoneyAmount(Currency.Usd, bestBid), default);
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
-                    {
-                        sw.WriteLine(DateTime.Now + @" ToShort " + item.Ticker + "price " + bestBid);
-                        sw.WriteLine();
-                    }
-                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.toShort");
-                }
-
-                if (tradeVariant == TradeTarget.fromShort
-                    &&
-                    portfolioPosition?.Balance < 0
-                    )
-                {
-                    portfolioPosition = null;
-                    tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, item.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-
-
-                    using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + item.Ticker), true, System.Text.Encoding.Default))
-                    {
-                        sw.WriteLine(DateTime.Now + @" FromShort " + item.Ticker + "price " + bestAsk);
-                        sw.WriteLine();
-                    }
-                    Log.Information("Stop trade: " + item.Figi + " TradeOperation.fromShort");
-                }
+                bestAsk = orderbook.Asks.FirstOrDefault().Price;
+                bestBid = orderbook.Bids.FirstOrDefault().Price;
             }
+
+
+            //var candleList = marketDataCollector.GetCandlesAsync(item.Figi, candleInterval, candlesCount).GetAwaiter().GetResult();
+
+            //Portfolio portfolio = marketDataCollector.GetPortfolioAsync().GetAwaiter().GetResult();
+            //List<TradeOperation> tradeOperations = marketDataCollector.GetOperationsAsync(item.figi, DateTime.Now, DateTime.Now.AddDays(-100)).GetAwaiter().GetResult();
+            //List<TradeOperation> tradeOperations = new List<TradeOperation>();
+            //tradeOperations.Add(tradeOperation);
+
+            //Portfolio.Position position = null;
+            //foreach (Portfolio.Position itemP in portfolio.Positions)
+            //{
+            //    if (itemP.Figi == item.figi)
+            //    {
+            //        position = itemP;
+            //    }
+            //}
+            List<TradeOperation> tradeOperationResult = new List<TradeOperation>();
+            tradeOperationResult.Add(tradeOperation);
+
+            //MoneyAmount averagePositionPrice = item.MoneyAmountT;
+            //List<TradeOperation> tradeOperationResult = new List<TradeOperation> { tradeOperation };
+            //portfolioPosition = new Portfolio.Position(portfolioPosition.Name, portfolioPosition.Figi, portfolioPosition.Ticker, portfolioPosition.Isin, portfolioPosition.InstrumentType, portfolioPosition.Balance, portfolioPosition.Blocked, portfolioPosition.ExpectedYield, portfolioPosition.Lots, averagePositionPrice, portfolioPosition.AveragePositionPriceNoNkd);
+            //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
+
+            GmmaDecision tradeDecision = new GmmaDecision() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
+            //Mishmash tradeDecision = new Mishmash() { candleList = candleList, deltaPrice = candleList.Candles.LastOrDefault().Close };
+            TradeTarget tradeVariant = default;
+
+            if (realTime)
+            {
+                tradeVariant = tradeDecision.TradeVariant();
+            }
+            else
+            {
+                tradeVariant = tradeDecision.TradeVariant(false);
+            }
+            //TradeTarget tradeVariant = gmmaDecision.TradeVariant();
+
+            //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
+
+            if (tradeVariant == TradeTarget.toLong
+                &&
+                portfolioPosition == null
+                )
+            {
+                int countBalance = 1;
+                portfolioPosition = new Portfolio.Position(default, candleList.Figi, default, default, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
+                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
+
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(DateTime.Now + @" Long " + candleList.Figi + "price " + bestAsk + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine();
+                }
+
+                Log.Information("Stop trade: " + candleList.Figi + " TradeOperation.toLong");
+            }
+
+            if (tradeVariant == TradeTarget.fromLong
+                &&
+                portfolioPosition?.Balance > 0)
+
+            {
+                decimal aMargin = candleList.Candles.LastOrDefault().Close - portfolioPosition.ExpectedYield.Value;
+                decimal oMargin = aMargin * 100 / portfolioPosition.ExpectedYield.Value;
+                (decimal, decimal) tuple = (aMargin, oMargin);
+                margin.Add(tuple);
+
+                portfolioPosition = null;
+                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(DateTime.Now + @" FromLong " + candleList.Figi + "price " + bestBid + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine();
+                }
+
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(margin.Sum(x=>x.Item1) + " " + margin.Sum(x => x.Item2) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine();
+                }
+                Log.Information("Stop trade: " + candleList.Figi + " TradeOperation.fromLong");
+            }
+
+            if (tradeVariant == TradeTarget.toShort
+                &&
+                portfolioPosition == null
+                )
+            {
+
+                int countBalance = -1;
+                portfolioPosition = new Portfolio.Position(default, candleList.Figi, default, default, default, countBalance, default, new MoneyAmount(Currency.Usd, bestBid), countBalance, new MoneyAmount(Currency.Usd, bestBid), default);
+                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(DateTime.Now + @" ToShort " + candleList.Figi + "price " + bestBid + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine();
+                }
+                Log.Information("Stop trade: " + candleList.Figi + " TradeOperation.toShort");
+            }
+
+            if (tradeVariant == TradeTarget.fromShort
+                &&
+                portfolioPosition?.Balance < 0
+                )
+            {
+                decimal aMargin = portfolioPosition.ExpectedYield.Value - candleList.Candles.LastOrDefault().Close;
+                decimal oMargin = aMargin * 100 / portfolioPosition.ExpectedYield.Value;
+                (decimal, decimal) tuple = (aMargin, oMargin);
+                margin.Add(tuple);
+
+                portfolioPosition = null;
+                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
+
+
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(DateTime.Now + @" FromShort " + candleList.Figi + "price " + bestAsk + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine();
+                }
+
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(margin.Sum(x => x.Item1) + " " + margin.Sum(x => x.Item2) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine();
+                }
+                Log.Information("Stop trade: " + candleList.Figi + " TradeOperation.fromShort");
+            }
+            //}
         }
     }
 
