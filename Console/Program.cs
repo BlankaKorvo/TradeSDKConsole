@@ -112,13 +112,13 @@ namespace tradeSDK
             //TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
             CandleInterval candleInterval = CandleInterval.Hour;
-            int candlesCount = 250;
-            var instrument = await marketDataCollector.GetInstrumentByTickerAsync("amzn");
+            int candlesCount = 400;
+            var instrument = await marketDataCollector.GetInstrumentByTickerAsync("aapl");
 
-            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, CandleInterval.Minute, 20000);
+            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, CandleInterval.Minute, 200000);
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
-                CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).ToList());
+                CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).Skip(i).ToList());
                 Orderbook orderbook = marketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
                 TestTrading(orderbook, notRealTimeCandleList, ref tradeOperation, ref portfolioPosition, ref margin, false);
             }
@@ -133,7 +133,8 @@ namespace tradeSDK
             {
                 try
                 {
-                    Orderbook orderbook = marketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
+                    Orderbook orderbook = new Orderbook(default, default, default, default, default, default, default, default, default, default, default);
+                    //Orderbook orderbook = marketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
                     if (orderbook == null)
                     {
                         Log.Information("Orderbook null");
