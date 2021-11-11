@@ -108,7 +108,7 @@ namespace tradeSDK
             //List<Instrument> instrumentList = new List<Instrument>();
             TradeOperation tradeOperation = null;
             Portfolio.Position portfolioPosition = null;
-            List<(decimal, decimal)> margin = new List<(decimal, decimal)>();
+            List<(decimal, decimal, decimal)> margin = new List<(decimal, decimal, decimal)>();
             //TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
             CandleInterval candleInterval = CandleInterval.Hour;
@@ -119,6 +119,7 @@ namespace tradeSDK
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
                 CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).Skip(i).ToList());
+                Log.Information("notRealTimeCandleListCount " + notRealTimeCandleList.Candles.Count + " " + notRealTimeCandleList.Candles.LastOrDefault().Time);
                 Orderbook orderbook = marketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
                 TestTrading(orderbook, notRealTimeCandleList, ref tradeOperation, ref portfolioPosition, ref margin, false);
             }
@@ -153,7 +154,7 @@ namespace tradeSDK
             }
         }
 
-        private static void TestTrading(Orderbook orderbook, CandlesList candleList, ref TradeOperation tradeOperation, ref Portfolio.Position portfolioPosition, ref List<(decimal, decimal)> margin, bool realTime=true)
+        private static void TestTrading(Orderbook orderbook, CandlesList candleList, ref TradeOperation tradeOperation, ref Portfolio.Position portfolioPosition, ref List<(decimal, decimal, decimal)> margin, bool realTime=true)
         {
             //foreach (var item in instrumentList)
             //{
@@ -238,9 +239,15 @@ namespace tradeSDK
                 portfolioPosition?.Balance > 0)
 
             {
+                decimal com = 0.00025m;
                 decimal aMargin = candleList.Candles.LastOrDefault().Close - portfolioPosition.ExpectedYield.Value;
+                Log.Information("aMargin= " + aMargin);
+                decimal comis = com * (candleList.Candles.LastOrDefault().Close + portfolioPosition.ExpectedYield.Value);
+                Log.Information("comis= " + comis);
+                decimal rMargin = aMargin - comis;
+                Log.Information("rMargin= " + rMargin);
                 decimal oMargin = aMargin * 100 / portfolioPosition.ExpectedYield.Value;
-                (decimal, decimal) tuple = (aMargin, oMargin);
+                (decimal, decimal, decimal) tuple = (aMargin, rMargin, oMargin);
                 margin.Add(tuple);
 
                 portfolioPosition = null;
@@ -253,7 +260,7 @@ namespace tradeSDK
 
                 using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
                 {
-                    sw.WriteLine(margin.Sum(x=>x.Item1) + " " + margin.Sum(x => x.Item2) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine(margin.Sum(x=>x.Item1) + " " + margin.Sum(x => x.Item2) + " " + margin.Sum(x => x.Item3) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
                 }
                 Log.Information("Stop trade: " + candleList.Figi + " TradeOperation.fromLong");
@@ -281,9 +288,15 @@ namespace tradeSDK
                 portfolioPosition?.Balance < 0
                 )
             {
+                decimal com = 0.00025m;
                 decimal aMargin = portfolioPosition.ExpectedYield.Value - candleList.Candles.LastOrDefault().Close;
+                Log.Information("aMargin= " + aMargin);
+                decimal comis = com * (candleList.Candles.LastOrDefault().Close + portfolioPosition.ExpectedYield.Value);
+                Log.Information("comis= " + comis);
+                decimal rMargin = aMargin - comis;
+                Log.Information("rMargin= " + rMargin);
                 decimal oMargin = aMargin * 100 / portfolioPosition.ExpectedYield.Value;
-                (decimal, decimal) tuple = (aMargin, oMargin);
+                (decimal, decimal, decimal) tuple = (aMargin, rMargin, oMargin);
                 margin.Add(tuple);
 
                 portfolioPosition = null;
@@ -298,7 +311,7 @@ namespace tradeSDK
 
                 using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
                 {
-                    sw.WriteLine(margin.Sum(x => x.Item1) + " " + margin.Sum(x => x.Item2) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
+                    sw.WriteLine(margin.Sum(x => x.Item1) + " " + margin.Sum(x => x.Item2) + " " + margin.Sum(x => x.Item3) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
                 }
                 Log.Information("Stop trade: " + candleList.Figi + " TradeOperation.fromShort");
