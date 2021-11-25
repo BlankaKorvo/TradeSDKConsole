@@ -111,11 +111,11 @@ namespace tradeSDK
             List<(decimal, decimal, decimal)> margin = new List<(decimal, decimal, decimal)>();
             //TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
-            CandleInterval candleInterval = CandleInterval.Hour;
+            CandleInterval candleInterval = CandleInterval.FiveMinutes;
             int candlesCount = 400;
             var instrument = await marketDataCollector.GetInstrumentByTickerAsync("aapl");
 
-            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, CandleInterval.Minute, 200000);
+            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, 200000);
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
                 CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).Skip(i).ToList());
