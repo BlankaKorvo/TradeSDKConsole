@@ -200,7 +200,7 @@ namespace tradeSDK
             //portfolioPosition = new Portfolio.Position(portfolioPosition.Name, portfolioPosition.Figi, portfolioPosition.Ticker, portfolioPosition.Isin, portfolioPosition.InstrumentType, portfolioPosition.Balance, portfolioPosition.Blocked, portfolioPosition.ExpectedYield, portfolioPosition.Lots, averagePositionPrice, portfolioPosition.AveragePositionPriceNoNkd);
             //GmmaDecisionOneMinutes gmmaDecision = new GmmaDecisionOneMinutes() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid };
 
-            GmmaDecision tradeDecision = new GmmaDecision() { candleList = candleList, orderbook = orderbook, bestAsk = bestAsk, bestBid = bestBid, portfolioPosition = portfolioPosition, tradeOperations = tradeOperationResult };
+            GmmaDecision tradeDecision = new GmmaDecision(candleList, orderbook);
             //Mishmash tradeDecision = new Mishmash() { candleList = candleList, deltaPrice = candleList.Candles.LastOrDefault().Close };
             TradeTarget tradeVariant = default;
 
