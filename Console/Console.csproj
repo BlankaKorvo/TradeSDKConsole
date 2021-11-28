@@ -18,10 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TradeSDK\Analysis\Analysis.csproj" />
     <ProjectReference Include="..\TradeSDK\DataCollector\DataCollector.csproj" />
     <ProjectReference Include="..\TradeSDK\MarketDataModules\MarketDataModules.csproj" />
     <ProjectReference Include="..\TradeSDK\Stock.Indicators\src\Indicators.csproj" />
+    <ProjectReference Include="..\TradeSDK\TradeAnalysis\Analysis\Analysis.csproj" />
     <ProjectReference Include="..\TradeSDK\Trader\Trader.csproj" />
   </ItemGroup>
 
