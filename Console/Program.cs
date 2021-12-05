@@ -113,9 +113,9 @@ namespace tradeSDK
 
             CandleInterval candleInterval = CandleInterval.FiveMinutes;
             int candlesCount = 400;
-            var instrument = await marketDataCollector.GetInstrumentByTickerAsync("aapl");
+            var instrument = await marketDataCollector.GetInstrumentByTickerAsync("USD000UTSTOM");
 
-            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, 200000);
+            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-3));
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
                 CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).Skip(i).ToList());
@@ -239,7 +239,7 @@ namespace tradeSDK
                 portfolioPosition?.Balance > 0)
 
             {
-                decimal com = 0.00025m;
+                const decimal com = 0.00025m;
                 decimal aMargin = candleList.Candles.LastOrDefault().Close - portfolioPosition.ExpectedYield.Value;
                 Log.Information("aMargin= " + aMargin);
                 decimal comis = com * (candleList.Candles.LastOrDefault().Close + portfolioPosition.ExpectedYield.Value);
