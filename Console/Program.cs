@@ -19,7 +19,7 @@ using LinqStatistics;
 
 using TradeTarget = MarketDataModules.Models.TradeTarget;
 
-using Trader;
+
 using System.Threading;
 using MarketDataModules.Models;
 using MarketDataModules.Models.Portfolio;
@@ -42,7 +42,7 @@ namespace tradeSDK
                 //.WriteTo.Console()
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
-            MarketDataCollector marketDataCollector = new MarketDataCollector();
+            //MarketDataCollector marketDataCollector = new MarketDataCollector();
             GetStocksHistory getStocksHistory = new GetStocksHistory();
             VolumeProfileScreener volumeProfileScreener = new VolumeProfileScreener();
             VolumeIncreaseScreener volumeIncreaseScreener = new VolumeIncreaseScreener();
@@ -113,14 +113,14 @@ namespace tradeSDK
 
             CandleInterval candleInterval = CandleInterval.FiveMinutes;
             int candlesCount = 400;
-            var instrument = await marketDataCollector.GetInstrumentByTickerAsync("USD000UTSTOM");
+            var instrument = await MarketDataCollector.GetInstrumentByTickerAsync("USD000UTSTOM");
 
-            CandlesList bigCandlesList = await marketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-3));
+            CandlesList bigCandlesList = await MarketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-3));
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
                 CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).Skip(i).ToList());
                 Log.Information("notRealTimeCandleListCount " + notRealTimeCandleList.Candles.Count + " " + notRealTimeCandleList.Candles.LastOrDefault().Time);
-                Orderbook orderbook = marketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
+                Orderbook orderbook = MarketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
                 TestTrading(orderbook, notRealTimeCandleList, ref tradeOperation, ref portfolioPosition, ref margin, false);
             }
 
@@ -141,7 +141,7 @@ namespace tradeSDK
                         Log.Information("Orderbook null");
                         continue;
                     }
-                    CandlesList candleList = marketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, candlesCount).GetAwaiter().GetResult();
+                    CandlesList candleList = MarketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, candlesCount).GetAwaiter().GetResult();
 
                     TestTrading(orderbook, candleList, ref tradeOperation, ref portfolioPosition, ref margin);
                 }
@@ -303,13 +303,13 @@ namespace tradeSDK
                 tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
 
 
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(DateTime.Now + @" FromShort " + candleList.Figi + "price " + bestAsk + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
                 }
 
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(margin.Sum(x => x.Item1) + " " + margin.Sum(x => x.Item2) + " " + margin.Sum(x => x.Item3) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
