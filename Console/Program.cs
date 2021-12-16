@@ -25,7 +25,7 @@ using MarketDataModules.Models;
 using MarketDataModules.Models.Portfolio;
 using MarketDataModules.Models.Operation;
 using System.Reflection;
-using Analysis.Screeners.Helpers;
+//using Analysis.Screeners.Helpers;
 using Analysis.Screeners.StockExchangeDataScreener;
 using Analysis.Signals;
 using Analysis.TradeDecision;
@@ -43,7 +43,7 @@ namespace tradeSDK
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
             //MarketDataCollector marketDataCollector = new MarketDataCollector();
-            GetStocksHistory getStocksHistory = new GetStocksHistory();
+            //GetStocksHistory getStocksHistory = new GetStocksHistory();
             VolumeProfileScreener volumeProfileScreener = new VolumeProfileScreener();
             VolumeIncreaseScreener volumeIncreaseScreener = new VolumeIncreaseScreener();
             TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
