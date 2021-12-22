@@ -4,32 +4,31 @@ using System.Threading.Tasks;
 using Serilog;
 
 using DataCollector;
-using CandleInterval = MarketDataModules.Models.Candles.CandleInterval;
+using CandleInterval = MarketDataModules.Candles.CandleInterval;
 using MarketDataModules;
 
 using System.Linq;
 using System.IO;
 
-using MarketDataModules.Models.Candles;
+using MarketDataModules.Candles;
 
 using Skender.Stock.Indicators;
 
-using Instrument = MarketDataModules.Models.Instruments.Instrument;
+using Instrument = MarketDataModules.Instruments.Instrument;
 using LinqStatistics;
 
-using TradeTarget = MarketDataModules.Models.TradeTarget;
+using TradeTarget = MarketDataModules.TradeTarget;
 
 
 using System.Threading;
-using MarketDataModules.Models;
-using MarketDataModules.Models.Portfolio;
-using MarketDataModules.Models.Operation;
+using MarketDataModules.Portfolio;
+using MarketDataModules.Operation;
 using System.Reflection;
 //using Analysis.Screeners.Helpers;
 using Analysis.Screeners.StockExchangeDataScreener;
 using Analysis.Signals;
 using Analysis.TradeDecision;
-using MarketDataModules.Models.Orderbooks;
+using MarketDataModules.Orderbooks;
 
 namespace tradeSDK
 {
@@ -115,7 +114,7 @@ namespace tradeSDK
             int candlesCount = 400;
             var instrument = await MarketDataCollector.GetInstrumentByTickerAsync("AMZN");
 
-            CandlesList bigCandlesList = await MarketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-3));
+            CandlesList bigCandlesList = await MarketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-12));
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
                 CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).Skip(i).ToList());
