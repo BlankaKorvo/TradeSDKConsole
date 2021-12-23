@@ -110,7 +110,7 @@ namespace tradeSDK
             List<(decimal, decimal, decimal)> margin = new List<(decimal, decimal, decimal)>();
             //TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
-            CandleInterval candleInterval = CandleInterval.FiveMinutes;
+            CandleInterval candleInterval = CandleInterval.TenMinutes;
             int candlesCount = 400;
             var instrument = await MarketDataCollector.GetInstrumentByTickerAsync("AMZN");
 
