@@ -110,9 +110,9 @@ namespace tradeSDK
             List<(decimal, decimal, decimal)> margin = new List<(decimal, decimal, decimal)>();
             //TradeTarget lastTradeTarget = TradeTarget.fromLong;
 
-            CandleInterval candleInterval = CandleInterval.TenMinutes;
+            CandleInterval candleInterval = CandleInterval.FiveMinutes;
             int candlesCount = 400;
-            var instrument = await MarketDataCollector.GetInstrumentByTickerAsync("AMZN");
+            var instrument = await MarketDataCollector.GetInstrumentByTickerAsync("QDEL");
 
             CandlesList bigCandlesList = await MarketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-12));
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
@@ -215,6 +215,9 @@ namespace tradeSDK
 
             //var gmmaSignalResult = signal.GmmaSignal(candleList, bestAsk , bestBid);
 
+            string _operationFile = "_operation_" + candleList.Figi + "_" + candleList.Interval.ToString();
+            string _marginFile = "_margin_" + candleList.Figi + "_" + candleList.Interval.ToString();
+
             if (tradeVariant == TradeTarget.toLong
                 &&
                 portfolioPosition == null
@@ -224,7 +227,7 @@ namespace tradeSDK
                 portfolioPosition = new Portfolio.Position(default, candleList.Figi, default, default, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
                 tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
 
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _operationFile), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(DateTime.Now + @" Long " + candleList.Figi + "price " + bestAsk + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
@@ -238,7 +241,7 @@ namespace tradeSDK
                 portfolioPosition?.Balance > 0)
 
             {
-                const decimal com = 0.00025m;
+                const decimal com = 0.0005m;
                 decimal aMargin = candleList.Candles.LastOrDefault().Close - portfolioPosition.ExpectedYield.Value;
                 Log.Information("aMargin= " + aMargin);
                 decimal comis = com * (candleList.Candles.LastOrDefault().Close + portfolioPosition.ExpectedYield.Value);
@@ -251,13 +254,13 @@ namespace tradeSDK
 
                 portfolioPosition = null;
                 tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _operationFile), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(DateTime.Now + @" FromLong " + candleList.Figi + "price " + bestBid + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
                 }
 
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _marginFile), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(margin.Sum(x=>x.Item1) + " " + margin.Sum(x => x.Item2) + " " + margin.Sum(x => x.Item3) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
@@ -274,7 +277,7 @@ namespace tradeSDK
                 int countBalance = -1;
                 portfolioPosition = new Portfolio.Position(default, candleList.Figi, default, default, default, countBalance, default, new MoneyAmount(Currency.Usd, bestBid), countBalance, new MoneyAmount(Currency.Usd, bestBid), default);
                 tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _operationFile), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(DateTime.Now + @" ToShort " + candleList.Figi + "price " + bestBid + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
@@ -302,13 +305,13 @@ namespace tradeSDK
                 tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, candleList.Figi, default, default, DateTime.Now.ToUniversalTime(), default);
 
 
-                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_operation " + candleList.Figi), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _operationFile), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(DateTime.Now + @" FromShort " + candleList.Figi + "price " + bestAsk + "candleTime: " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
                 }
 
-                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_margin_" + candleList.Figi + "_" + candleList.Interval), true, System.Text.Encoding.Default))
+                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _marginFile), true, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(margin.Sum(x => x.Item1) + " " + margin.Sum(x => x.Item2) + " " + margin.Sum(x => x.Item3) + " " + candleList.Candles.LastOrDefault().Time.AddHours(3));
                     sw.WriteLine();
