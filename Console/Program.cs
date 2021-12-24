@@ -112,14 +112,17 @@ namespace tradeSDK
 
             CandleInterval candleInterval = CandleInterval.FiveMinutes;
             int candlesCount = 400;
-            var instrument = await MarketDataCollector.GetInstrumentByTickerAsync("QDEL");
+            var instrument = await MarketDataCollector.GetInstrumentByTickerAsync("AMZN");
 
-            CandlesList bigCandlesList = await MarketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-12));
+            CandlesList bigCandlesList = await MarketDataCollector.GetCandlesAsync(instrument.Figi, candleInterval, DateTime.Now.AddMonths(-13));
             for (int i = 0; i < bigCandlesList.Candles.Count - candlesCount; i++)
             {
                 CandlesList notRealTimeCandleList = new CandlesList(bigCandlesList.Figi, bigCandlesList.Interval, bigCandlesList.Candles.Take(candlesCount + i).Skip(i).ToList());
                 Log.Information("notRealTimeCandleListCount " + notRealTimeCandleList.Candles.Count + " " + notRealTimeCandleList.Candles.LastOrDefault().Time);
                 Orderbook orderbook = MarketDataCollector.GetOrderbookAsync(instrument.Figi, Provider.Tinkoff, 50).GetAwaiter().GetResult();
+                OrderbookEntry orderbookEntry = new OrderbookEntry(1, notRealTimeCandleList.Candles.Last().Close); 
+                List<OrderbookEntry> orderbookEntries = new List<OrderbookEntry>() { orderbookEntry };
+                //Orderbook orderbook = new Orderbook(1, orderbookEntries, orderbookEntries, notRealTimeCandleList.Figi, default, default, default, default, default, default, default);
                 TestTrading(orderbook, notRealTimeCandleList, ref tradeOperation, ref portfolioPosition, ref margin, false);
             }
 
