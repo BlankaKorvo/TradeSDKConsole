@@ -30,6 +30,7 @@ using Analysis.Screeners.StockExchangeDataScreener;
 using Analysis.Signals;
 using Analysis.TradeDecision;
 using MarketDataModules.Orderbooks;
+using DataCollector.TinkoffAdapter;
 
 namespace tradeSDK
 {
@@ -51,6 +52,20 @@ namespace tradeSDK
             OrderbookScreener orderbookScreener = new OrderbookScreener();
             Signal signal = new Signal();
 
+
+
+
+
+            var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 1000).GetCandlesTinkoffAsync();
+
+            foreach (var c in ccccc.Candles)
+            {
+                Console.WriteLine(c.Time.ToString());
+            }
+
+            Console.WriteLine(ccccc.Candles.Count);
+
+            Console.ReadKey();
             /// AutoTrading
             //List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
             //List<Instrument> instruments = new List<Instrument>();
