@@ -31,6 +31,7 @@ using Analysis.Signals;
 using Analysis.TradeDecision;
 using MarketDataModules.Orderbooks;
 using DataCollector.TinkoffAdapter;
+using System.Diagnostics;
 
 namespace tradeSDK
 {
@@ -55,17 +56,20 @@ namespace tradeSDK
 
 
 
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
+            ////var ccccc = await GetTinkoffData.GetCandlesTinkoffAsync("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000);
+            //var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000).GetCandlesTinkoffAsync();
+            //stopwatch.Stop();   
+            //foreach (var c in ccccc.Candles)
+            //{
+            //    Console.WriteLine(c.Time.ToString());
+            //}
 
-            var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 1000).GetCandlesTinkoffAsync();
+            //Console.WriteLine(ccccc.Candles.Count);
+            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
-            foreach (var c in ccccc.Candles)
-            {
-                Console.WriteLine(c.Time.ToString());
-            }
-
-            Console.WriteLine(ccccc.Candles.Count);
-
-            Console.ReadKey();
+            //Console.ReadKey();
             /// AutoTrading
             //List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
             //List<Instrument> instruments = new List<Instrument>();
