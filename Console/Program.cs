@@ -54,22 +54,22 @@ namespace tradeSDK
             Signal signal = new Signal();
 
 
-
-
             //Stopwatch stopwatch = new Stopwatch();
             //stopwatch.Start();
             ////var ccccc = await GetTinkoffData.GetCandlesTinkoffAsync("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000);
-            //var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000).GetCandlesTinkoffAsync();
-            //stopwatch.Stop();   
+            ////var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000).GetCandlesTinkoffAsync();
+            //var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Day, 100).GetCandlesTinkoffAsync();
+            //stopwatch.Stop();
             //foreach (var c in ccccc.Candles)
             //{
             //    Console.WriteLine(c.Time.ToString());
             //}
 
+            //Console.WriteLine(DateTime.Now.CompareTo(DateTime.Now.AddDays(-3)));
             //Console.WriteLine(ccccc.Candles.Count);
             //Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
-            //Console.ReadKey();
+            Console.ReadKey();
             /// AutoTrading
             //List<string> Tickers = new List<string> { "AMZN", "AAPL", "GOOG", "CLOV" };
             //List<Instrument> instruments = new List<Instrument>();
