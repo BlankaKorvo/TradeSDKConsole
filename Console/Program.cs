@@ -54,20 +54,22 @@ namespace tradeSDK
             Signal signal = new Signal();
 
 
-            //Stopwatch stopwatch = new Stopwatch();
-            //stopwatch.Start();
-            ////var ccccc = await GetTinkoffData.GetCandlesTinkoffAsync("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000);
-            ////var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000).GetCandlesTinkoffAsync();
-            //var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Day, 100).GetCandlesTinkoffAsync();
-            //stopwatch.Stop();
-            //foreach (var c in ccccc.Candles)
-            //{
-            //    Console.WriteLine(c.Time.ToString());
-            //}
 
-            //Console.WriteLine(DateTime.Now.CompareTo(DateTime.Now.AddDays(-3)));
-            //Console.WriteLine(ccccc.Candles.Count);
-            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            Console.ReadKey();
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            //var ccccc = await GetTinkoffData.GetCandlesTinkoffAsync("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000);
+            //var ccccc = await new GetTinkoffCandles("BBG000B9XRY4", (Tinkoff.Trading.OpenApi.Models.CandleInterval)CandleInterval.Minute, 100000).GetCandlesTinkoffAsync();
+            var ccccc = await MarketDataProvider.GetCandlesAsync("BBG000B9XRY4",CandleInterval.Day, 100);
+            stopwatch.Stop();
+            foreach (var c in ccccc.Candles)
+            {
+                Console.WriteLine(c.Time.ToString());
+            }
+
+            Console.WriteLine(DateTime.Now.CompareTo(DateTime.Now.AddDays(-3)));
+            Console.WriteLine(ccccc.Candles.Count);
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
             Console.ReadKey();
             /// AutoTrading
