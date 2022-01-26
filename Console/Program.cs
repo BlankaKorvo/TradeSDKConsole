@@ -13,8 +13,6 @@ using System.IO;
 
 using MarketDataModules.Candles;
 
-using Skender.Stock.Indicators;
-
 using Instrument = MarketDataModules.Instruments.Instrument;
 using LinqStatistics;
 
@@ -50,7 +48,7 @@ namespace tradeSDK
             TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
             StochDivScreener stochDivScreener = new StochDivScreener();
             OrderbookScreener orderbookScreener = new OrderbookScreener();
-            Signal signal = new Signal();
+            Analysis.Signals.Signal signal = new Signal();
 
 
             Stopwatch stopwatch = new Stopwatch();
