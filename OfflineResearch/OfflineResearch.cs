@@ -6,7 +6,7 @@ using MarketDataModules.Portfolio;
 using MarketDataModules.Trading;
 using Serilog;
 
-namespace OfflineResearch
+namespace Research
 {
     public class OfflineResearch
     {
@@ -20,7 +20,7 @@ namespace OfflineResearch
         ICandlesList candleList;
         int candlesCount;
         readonly decimal comission;
-
+        int countBalance;
         decimal lastTransactPrice;
 
         List<(decimal priceMargin, decimal realMargin, decimal percentMargin)> margin = new();
@@ -51,7 +51,7 @@ namespace OfflineResearch
             string operationFile = $"_operation {figi} {candleInterval}";
             string marginFile = $"_margin {figi} {candleInterval}";
 
-            int countBalance = 0;
+            
 
             if (tradeTarget == TradeTarget.toLong
                 &&
@@ -60,6 +60,7 @@ namespace OfflineResearch
             {
                 countBalance = 1;
                 lastTransactPrice = price;
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
             }
 
             if (tradeTarget == TradeTarget.fromLong
@@ -70,6 +71,7 @@ namespace OfflineResearch
 
                 decimal priceMargin = price - lastTransactPrice;
                 margin.Add(MarginResult(price, priceMargin));
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
                 LogToMarginFile(lastTime, marginFile);
             }
 
@@ -80,6 +82,7 @@ namespace OfflineResearch
             {
                 countBalance = -1;
                 lastTransactPrice = price;
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
             }
 
             if (tradeTarget == TradeTarget.fromShort
@@ -92,16 +95,17 @@ namespace OfflineResearch
                 decimal priceMargin = lastTransactPrice - price;
                 margin.Add(MarginResult(price, priceMargin));                
                 LogToMarginFile(lastTime, marginFile);
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
             }
 
-            LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+            
             
             ///
             static void LogToOperationFile(TradeTarget tradeTarget, string figi, DateTime lastTime, decimal bestAsk, string operationFile)
             {
                 using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
                 {
-                    sw.WriteLine(DateTime.Now + $"{tradeTarget} {figi} price {bestAsk} candleTime: {lastTime}");
+                    sw.WriteLine($"{DateTime.Now} {tradeTarget} {figi} price {bestAsk} candleTime: {lastTime}");
                     sw.WriteLine();
                 }
             }

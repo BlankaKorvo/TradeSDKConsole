@@ -29,6 +29,8 @@ using MarketDataModules.Orderbooks;
 using DataCollector.TinkoffAdapter;
 using System.Diagnostics;
 using MarketDataModules.Trading;
+using Research;
+
 
 namespace tradeSDK
 {
@@ -42,16 +44,16 @@ namespace tradeSDK
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
 
-
-
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-
+            string ticker = "Amzn";
+            var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
+            ICandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.FiveMinutes, DateTime.Now.AddDays(-365));
+            new OfflineResearch(candlesList).Research();
             stopwatch.Stop();
 
 
             Console.ReadKey();
-
         }
     }
 
