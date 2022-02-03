@@ -9,139 +9,112 @@ namespace OfflineResearch
 {
     public class OfflineResearch
     {
-        public OfflineResearch(ICandlesList _candleList, int _candlesCount = 400)
+        public OfflineResearch(ICandlesList _candleList, int _candlesCount = 400, decimal _comission = 0.05m)
         {
             candleList = _candleList;
             candlesCount = _candlesCount;
+            comission = _comission;
         }
-        int candlesCount;
+
         ICandlesList candleList;
+        int candlesCount;
+        readonly decimal comission;
 
+        decimal lastTransactPrice;
 
-        Portfolio.Position? portfolioPosition;
-        const decimal COM = 0.0005m;
-        TradeOperation tradeOperation;
-        List<TradeOperation> tradeOperations;
-        TradeTarget tradeTarget;
-        List<(decimal, decimal, decimal)> margin = new();
-
-
+        List<(decimal priceMargin, decimal realMargin, decimal percentMargin)> margin = new();
 
         public void Research()
         {
             for (int i = 0; i < candleList.Candles.Count - candlesCount; i++)
             {
                 CandlesList goingCandleList = new CandlesList(candleList.Figi, candleList.Interval, candleList.Candles.Take(candlesCount + i).Skip(i).ToList());
-                tradeTarget = default;//Пока не имплементированно
+                TradeTarget tradeTarget = default;//Пока не имплементированно
                 FixTradeDecision(tradeTarget, goingCandleList.Figi, goingCandleList.Candles.Last().Close, goingCandleList.Candles.Last().Time.AddHours(3), goingCandleList.Interval);
             }
         }
-        private void FixTradeDecision(TradeTarget tradeTarget,string figi, decimal close, DateTime lastTime, CandleInterval candleInterval)
+        private void FixTradeDecision(TradeTarget tradeTarget,string figi, decimal price, DateTime lastTime, CandleInterval candleInterval)
         {
-            decimal bestAsk = close;
-            decimal bestBid = close;
-
-
             string operationFile = $"_operation {figi} {candleInterval}";
             string marginFile = $"_margin {figi} {candleInterval}";
 
+            int countBalance = 0;
+
             if (tradeTarget == TradeTarget.toLong
                 &&
-                portfolioPosition == null
+                countBalance == 0
                 )
             {
-                int countBalance = 1;
-                portfolioPosition = new Portfolio.Position(default, figi, default, default, default, countBalance, default, new MoneyAmount(Currency.Usd, bestAsk), countBalance, new MoneyAmount(Currency.Usd, bestAsk), default);
-                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, figi, default, default, DateTime.Now.ToUniversalTime(), default);
-
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(DateTime.Now + $"Long {figi} price {bestAsk} candleTime: {lastTime}");
-                    sw.WriteLine();
-                }
+                countBalance = 1;
+                lastTransactPrice = price;
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
             }
 
             if (tradeTarget == TradeTarget.fromLong
                 &&
-                portfolioPosition?.Balance > 0)
-
+                countBalance > 0)
             {
-                decimal aMargin =close - portfolioPosition.ExpectedYield.Value;
-                Log.Information("aMargin= " + aMargin);
-                decimal comis = COM * (close + portfolioPosition.ExpectedYield.Value);
-                Log.Information("comis= " + comis);
-                decimal rMargin = aMargin - comis;
-                Log.Information("rMargin= " + rMargin);
-                decimal oMargin = aMargin * 100 / portfolioPosition.ExpectedYield.Value;
-                (decimal, decimal, decimal) tuple = (aMargin, rMargin, oMargin);
-                margin.Add(tuple);
+                countBalance = 0;
 
-                portfolioPosition = null;
-                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(DateTime.Now + @" FromLong " + figi + "price " + bestBid + "candleTime: " + lastTime);
-                    sw.WriteLine();
-                }
+                decimal priceMargin = price - lastTransactPrice;
+                margin.Add(MarginResult(price, priceMargin));
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                LogToMarginFile(lastTime, marginFile);
 
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, marginFile), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(margin.Sum(x => x.Item1) + " " + margin.Sum(x => x.Item2) + " " + margin.Sum(x => x.Item3) + " " + lastTime);
-                    sw.WriteLine();
-                }
-                Log.Information("Stop trade: " + figi + " TradeOperation.fromLong");
             }
 
             if (tradeTarget == TradeTarget.toShort
                 &&
-                portfolioPosition?.Balance == 0
+                countBalance == 0
                 )
             {
-
-                int countBalance = -1;
-                portfolioPosition = new Portfolio.Position(default, figi, default, default, default, countBalance, default, new MoneyAmount(Currency.Usd, bestBid), countBalance, new MoneyAmount(Currency.Usd, bestBid), default);
-                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestBid, default, default, figi, default, default, DateTime.Now.ToUniversalTime(), default);
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(DateTime.Now + @" ToShort " + figi + "price " + bestBid + "candleTime: " + lastTime);
-                    sw.WriteLine();
-                }
-                Log.Information("Stop trade: " + figi + " TradeOperation.toShort");
+                countBalance = -1;
+                lastTransactPrice = price;
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
             }
 
             if (tradeTarget == TradeTarget.fromShort
                 &&
-                portfolioPosition?.Balance < 0
+                countBalance < 0
                 )
             {
-                decimal aMargin = portfolioPosition.ExpectedYield.Value - close;
-                Log.Information("aMargin= " + aMargin);
-                decimal comis = COM * (close + portfolioPosition.ExpectedYield.Value);
-                Log.Information("comis= " + comis);
-                decimal rMargin = aMargin - comis;
-                Log.Information("rMargin= " + rMargin);
-                decimal oMargin = aMargin * 100 / portfolioPosition.ExpectedYield.Value;
-                (decimal, decimal, decimal) tuple = (aMargin, rMargin, oMargin);
-                margin.Add(tuple);
+                countBalance = 0;
 
-                portfolioPosition = null;
-                tradeOperation = new TradeOperation(default, default, default, default, default, default, bestAsk, default, default, figi, default, default, DateTime.Now.ToUniversalTime(), default);
+                decimal priceMargin = lastTransactPrice - price;
+                margin.Add(MarginResult(price, priceMargin));
+                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                LogToMarginFile(lastTime, marginFile);
 
-
-                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(DateTime.Now + @" FromShort " + figi + "price " + bestAsk + "candleTime: " + lastTime);
-                    sw.WriteLine();
-                }
-
-                using (StreamWriter sw = new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, marginFile), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(margin.Sum(x => x.Item1) + " " + margin.Sum(x => x.Item2) + " " + margin.Sum(x => x.Item3) + " " + lastTime);
-                    sw.WriteLine();
-                }
-                Log.Information("Stop trade: " + figi + " TradeOperation.fromShort");
             }
-            tradeOperations.Add(tradeOperation);
+
+            static void LogToOperationFile(TradeTarget tradeTarget, string figi, DateTime lastTime, decimal bestAsk, string operationFile)
+            {
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(DateTime.Now + $"{tradeTarget} {figi} price {bestAsk} candleTime: {lastTime}");
+                    sw.WriteLine();
+                }
+            }
+
+            void LogToMarginFile(DateTime lastTime, string marginFile)
+            {
+                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, marginFile), true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine($"{margin.Sum(x => x.priceMargin)}  {margin.Sum(x => x.realMargin)} {margin.Sum(x => x.percentMargin)} {lastTime}");
+                    sw.WriteLine();
+                }
+            }
+
+            (decimal priceMargin, decimal realMargin, decimal percentMargin) MarginResult(decimal price, decimal priceMargin)
+            {
+                decimal comissionSum = comission * (price + lastTransactPrice) / 100;
+
+                decimal realMargin = priceMargin - comissionSum;
+
+                decimal percentMargin = realMargin * 100 / lastTransactPrice;
+                               
+                return (priceMargin, realMargin, percentMargin);
+            }
         }
     }
 }
