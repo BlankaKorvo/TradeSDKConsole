@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TradeAnalysis\Analysis\Analysis.csproj" />
     <ProjectReference Include="..\TradeAnalysis\BrokersAdapter\TradeDataModules\MarketDataModules\MarketDataModules.csproj" />
   </ItemGroup>
 

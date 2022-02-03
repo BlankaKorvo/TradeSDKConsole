@@ -1,4 +1,5 @@
-﻿using MarketDataModules.Candles;
+﻿using Analysis.TradeDecision;
+using MarketDataModules.Candles;
 using MarketDataModules.Operation;
 using MarketDataModules.Orderbooks;
 using MarketDataModules.Portfolio;
@@ -24,15 +25,27 @@ namespace OfflineResearch
 
         List<(decimal priceMargin, decimal realMargin, decimal percentMargin)> margin = new();
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Research()
         {
             for (int i = 0; i < candleList.Candles.Count - candlesCount; i++)
             {
-                CandlesList goingCandleList = new CandlesList(candleList.Figi, candleList.Interval, candleList.Candles.Take(candlesCount + i).Skip(i).ToList());
-                TradeTarget tradeTarget = default;//Пока не имплементированно
+                ICandlesList goingCandleList = new CandlesList(candleList.Figi, candleList.Interval, candleList.Candles.Take(candlesCount + i).Skip(i).ToList());
+                TradeTarget tradeTarget = new GmmaDecision(goingCandleList, goingCandleList.Candles.Last().Close, goingCandleList.Candles.Last().Close).TradeVariant();//Пока не имплементированно
                 FixTradeDecision(tradeTarget, goingCandleList.Figi, goingCandleList.Candles.Last().Close, goingCandleList.Candles.Last().Time.AddHours(3), goingCandleList.Interval);
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="tradeTarget"></param>
+        /// <param name="figi"></param>
+        /// <param name="price"></param>
+        /// <param name="lastTime"></param>
+        /// <param name="candleInterval"></param>
         private void FixTradeDecision(TradeTarget tradeTarget,string figi, decimal price, DateTime lastTime, CandleInterval candleInterval)
         {
             string operationFile = $"_operation {figi} {candleInterval}";
@@ -47,7 +60,6 @@ namespace OfflineResearch
             {
                 countBalance = 1;
                 lastTransactPrice = price;
-                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
             }
 
             if (tradeTarget == TradeTarget.fromLong
@@ -58,9 +70,7 @@ namespace OfflineResearch
 
                 decimal priceMargin = price - lastTransactPrice;
                 margin.Add(MarginResult(price, priceMargin));
-                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
                 LogToMarginFile(lastTime, marginFile);
-
             }
 
             if (tradeTarget == TradeTarget.toShort
@@ -70,7 +80,6 @@ namespace OfflineResearch
             {
                 countBalance = -1;
                 lastTransactPrice = price;
-                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
             }
 
             if (tradeTarget == TradeTarget.fromShort
@@ -81,12 +90,13 @@ namespace OfflineResearch
                 countBalance = 0;
 
                 decimal priceMargin = lastTransactPrice - price;
-                margin.Add(MarginResult(price, priceMargin));
-                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                margin.Add(MarginResult(price, priceMargin));                
                 LogToMarginFile(lastTime, marginFile);
-
             }
 
+            LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+            
+            ///
             static void LogToOperationFile(TradeTarget tradeTarget, string figi, DateTime lastTime, decimal bestAsk, string operationFile)
             {
                 using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
@@ -96,6 +106,7 @@ namespace OfflineResearch
                 }
             }
 
+            ///
             void LogToMarginFile(DateTime lastTime, string marginFile)
             {
                 using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, marginFile), true, System.Text.Encoding.Default))
@@ -105,14 +116,13 @@ namespace OfflineResearch
                 }
             }
 
+            ///
             (decimal priceMargin, decimal realMargin, decimal percentMargin) MarginResult(decimal price, decimal priceMargin)
             {
                 decimal comissionSum = comission * (price + lastTransactPrice) / 100;
 
                 decimal realMargin = priceMargin - comissionSum;
-
-                decimal percentMargin = realMargin * 100 / lastTransactPrice;
-                               
+                decimal percentMargin = realMargin * 100 / lastTransactPrice;                               
                 return (priceMargin, realMargin, percentMargin);
             }
         }
