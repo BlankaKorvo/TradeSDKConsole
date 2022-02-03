@@ -45,8 +45,8 @@ namespace tradeSDK
             //GetStocksHistory getStocksHistory = new GetStocksHistory();
             VolumeProfileScreener volumeProfileScreener = new VolumeProfileScreener();
             VolumeIncreaseScreener volumeIncreaseScreener = new VolumeIncreaseScreener();
-            TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
-            StochDivScreener stochDivScreener = new StochDivScreener();
+            //TwoEmaScreener twoEmaScreener = new TwoEmaScreener();
+            //StochDivScreener stochDivScreener = new StochDivScreener();
             OrderbookScreener orderbookScreener = new OrderbookScreener();
             Analysis.Signals.Signal signal = new Signal();
 
