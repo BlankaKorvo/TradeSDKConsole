@@ -33,7 +33,8 @@ namespace Research
             for (int i = 0; i < candleList.Candles.Count - candlesCount; i++)
             {
                 ICandlesList goingCandleList = new CandlesList(candleList.Figi, candleList.Interval, candleList.Candles.Take(candlesCount + i).Skip(i).ToList());
-                TradeTarget tradeTarget = new GmmaDecision(goingCandleList, goingCandleList.Candles.Last().Close, goingCandleList.Candles.Last().Close).TradeVariant();//Пока не имплементированно
+                //TradeTarget tradeTarget = new GmmaDecision(goingCandleList, goingCandleList.Candles.Last().Close, goingCandleList.Candles.Last().Close).TradeVariant();//Пока не имплементированно
+                TradeTarget tradeTarget = new StopReversDecision(goingCandleList, goingCandleList.Candles.Last().Close, goingCandleList.Candles.Last().Close).TradeVariant();
                 FixTradeDecision(tradeTarget, goingCandleList.Figi, goingCandleList.Candles.Last().Close, goingCandleList.Candles.Last().Time.AddHours(3), goingCandleList.Interval);
             }
         }
@@ -53,59 +54,81 @@ namespace Research
 
             
 
-            if (tradeTarget == TradeTarget.toLong
-                &&
-                countBalance == 0
-                )
+            if (tradeTarget == TradeTarget.toLong)
             {
-                countBalance = 1;
-                lastTransactPrice = price;
-                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                if (countBalance == 0)
+                {
+                    LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                    lastTransactPrice = price;
+                    countBalance = 1;
+                    return;
+                }
+                if (countBalance < 0)
+                {
+                    decimal priceMargin = (lastTransactPrice - price);
+                    margin.Add(MarginResult(price, priceMargin));
+                    LogToMarginFile(lastTime, marginFile);
+                    LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                    lastTransactPrice = price;
+                    countBalance = 1;
+                    return;
+                }
+
             }
 
             if (tradeTarget == TradeTarget.fromLong
                 &&
                 countBalance > 0)
             {
-                countBalance = 0;
-
                 decimal priceMargin = price - lastTransactPrice;
                 margin.Add(MarginResult(price, priceMargin));
                 LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
                 LogToMarginFile(lastTime, marginFile);
+                countBalance = 0;
+                return;
             }
 
-            if (tradeTarget == TradeTarget.toShort
-                &&
-                countBalance == 0
-                )
+            if (tradeTarget == TradeTarget.toShort)
             {
-                countBalance = -1;
-                lastTransactPrice = price;
-                LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
-            }
+                if (countBalance == 0)
+                {
+                    LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                    countBalance = -1;
+                    lastTransactPrice = price;
+                    return;
+                }
+                if (countBalance > 0)
+                {
+                    decimal priceMargin = (price - lastTransactPrice);
+                    margin.Add(MarginResult(price, priceMargin));
+                    LogToMarginFile(lastTime, marginFile);
+                    LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                    countBalance = -1;
+                    lastTransactPrice = price;
+                    return;
+                }
 
+            }
             if (tradeTarget == TradeTarget.fromShort
                 &&
                 countBalance < 0
                 )
             {
-                countBalance = 0;
-
                 decimal priceMargin = lastTransactPrice - price;
                 margin.Add(MarginResult(price, priceMargin));                
                 LogToMarginFile(lastTime, marginFile);
                 LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
+                countBalance = 0;
+                return;
             }
-
-            
+                      
             
             ///
-            static void LogToOperationFile(TradeTarget tradeTarget, string figi, DateTime lastTime, decimal bestAsk, string operationFile)
+            static void LogToOperationFile(TradeTarget tradeTarget, string figi, DateTime lastTime, decimal price, string operationFile)
             {
                 using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, operationFile), true, System.Text.Encoding.Default))
                 {
-                    sw.WriteLine($"{DateTime.Now} {tradeTarget} {figi} price {bestAsk} candleTime: {lastTime}");
+                    sw.WriteLine($"{DateTime.Now} {tradeTarget} {figi} price {price} candleTime: {lastTime}");
                     sw.WriteLine();
                 }
             }
