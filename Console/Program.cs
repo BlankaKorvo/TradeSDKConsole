@@ -1,19 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Serilog;
 using DataCollector;
-
-using System.Linq;
 using System.IO;
-
 using MarketDataModules.Candles;
-
 using System.Diagnostics;
-
 using Research;
-using Skender.Stock.Indicators;
-using Analysis;
 
 namespace tradeSDK
 {
@@ -31,7 +23,7 @@ namespace tradeSDK
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            string ticker = "AMZN";
+            string ticker = "NVR";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
             ICandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.Day, DateTime.Now.AddDays(-380));
             stopwatch.Start();
