@@ -14,7 +14,7 @@ namespace tradeSDK
         static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.Information()
                 //.WriteTo.Console()
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
@@ -25,7 +25,7 @@ namespace tradeSDK
             stopwatch.Start();
             string ticker = "NVR";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
-            ICandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.Day, DateTime.Now.AddDays(-380));
+            ICandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.FiveMinutes, DateTime.Now.AddDays(-380));
             stopwatch.Start();
             //List<ParabolicSarResult> parabolicSarTrand = MapperCandlesToQuote.ConvertThisCandlesToQuote(candlesList.Candles).GetParabolicSar(accelerationStep, maxAccelerationFactor, initialFactor).ToList();
             new OfflineResearch(candlesList).Research();
