@@ -22,6 +22,10 @@ namespace Research
         readonly decimal comission;
         int countBalance;
         decimal lastTransactPrice;
+        decimal outTrandactPrice;
+        DateTime lastTransactTime;
+
+
 
         List<(decimal priceMargin, decimal realMargin, decimal percentMargin)> margin = new();
 
@@ -60,6 +64,7 @@ namespace Research
                 {
                     LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
                     lastTransactPrice = price;
+                    lastTransactTime = lastTime;
                     countBalance = 1;
                     return;
                 }
@@ -70,6 +75,7 @@ namespace Research
                     LogToMarginFile(lastTime, marginFile);
                     LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
                     lastTransactPrice = price;
+                    lastTransactTime = lastTime;
                     countBalance = 1;
                     return;
                 }
@@ -95,6 +101,7 @@ namespace Research
                     LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
                     countBalance = -1;
                     lastTransactPrice = price;
+                    lastTransactTime = lastTime;
                     return;
                 }
                 if (countBalance > 0)
@@ -105,6 +112,7 @@ namespace Research
                     LogToOperationFile(tradeTarget, figi, lastTime, price, operationFile);
                     countBalance = -1;
                     lastTransactPrice = price;
+                    lastTransactTime = lastTime;
                     return;
                 }
 
