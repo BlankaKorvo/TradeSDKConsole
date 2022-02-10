@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OfflineResearch\Research.csproj" />
+    <ProjectReference Include="..\Research\Research.csproj" />
     <ProjectReference Include="..\TradeAnalysis\Analysis\Analysis.csproj" />
     <ProjectReference Include="..\TradeAnalysis\BrokersAdapter\DataCollector\DataCollector.csproj" />
     <ProjectReference Include="..\TradeAnalysis\BrokersAdapter\TradeDataModules\MarketDataModules\MarketDataModules.csproj" />
