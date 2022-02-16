@@ -14,7 +14,7 @@ namespace tradeSDK
         static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
+                .MinimumLevel.Debug()
                 //.WriteTo.Console()
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
