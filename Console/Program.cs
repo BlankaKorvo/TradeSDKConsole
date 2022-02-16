@@ -23,9 +23,9 @@ namespace tradeSDK
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            string ticker = "NVR";
+            string ticker = "AAPL";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
-            ICandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.FiveMinutes, DateTime.Now.AddDays(-380));
+            ICandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.FiveMinutes, DateTime.Now.AddDays(-360));
             stopwatch.Start();
             //List<ParabolicSarResult> parabolicSarTrand = MapperCandlesToQuote.ConvertThisCandlesToQuote(candlesList.Candles).GetParabolicSar(accelerationStep, maxAccelerationFactor, initialFactor).ToList();
             new OfflineResearch(candlesList).Research();
