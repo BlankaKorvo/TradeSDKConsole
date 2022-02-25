@@ -5,7 +5,7 @@ using DataCollector;
 using System.IO;
 using MarketDataModules.Candles;
 using System.Diagnostics;
-using Research;
+using ResearchLib;
 
 namespace tradeSDK
 {
@@ -25,16 +25,17 @@ namespace tradeSDK
             stopwatch.Start();
             string ticker = "AAPL";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
-            ICandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.FiveMinutes, DateTime.Now.AddDays(-360));
+
             stopwatch.Start();
             //List<ParabolicSarResult> parabolicSarTrand = MapperCandlesToQuote.ConvertThisCandlesToQuote(candlesList.Candles).GetParabolicSar(accelerationStep, maxAccelerationFactor, initialFactor).ToList();
-            new OfflineResearch(candlesList).Research();
+            TimeSpan timeSpan = TimeSpan.FromDays(360);
+            await new OfflineResearch(instrument.Figi,CandleInterval.FiveMinutes, timeSpan, 400).Start();
             stopwatch.Stop();
-            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
 
 
-            //Console.ReadKey();
+            Console.ReadKey();
         }
     }
 

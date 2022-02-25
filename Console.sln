@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "Console\Console.csproj", "{068D2842-F965-45DA-9F76-07A0D4EEA80A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Research", "TradeResearch\OfflineResearch\Research.csproj", "{5F8CAC84-8968-4B42-BFD1-934020A42FC9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResearchLib", "TradeResearch\OfflineResearch\ResearchLib.csproj", "{5F8CAC84-8968-4B42-BFD1-934020A42FC9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Analysis", "TradeResearch\TradeAnalysis\Analysis\Analysis.csproj", "{C23AEB32-7FEA-4158-8112-9F651EC24C80}"
 EndProject
