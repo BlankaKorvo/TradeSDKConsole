@@ -19,8 +19,6 @@ namespace tradeSDK
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true)
                 .CreateLogger();
 
-
-
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             string ticker = "AAPL";
@@ -32,9 +30,6 @@ namespace tradeSDK
             await new OfflineResearch(instrument.Figi,CandleInterval.FiveMinutes, timeSpan, 400).Start();
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
-
-
-
             Console.ReadKey();
         }
     }
