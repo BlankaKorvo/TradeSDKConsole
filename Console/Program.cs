@@ -27,7 +27,7 @@ namespace tradeSDK
             stopwatch.Start();
             //List<ParabolicSarResult> parabolicSarTrand = MapperCandlesToQuote.ConvertThisCandlesToQuote(candlesList.Candles).GetParabolicSar(accelerationStep, maxAccelerationFactor, initialFactor).ToList();
             TimeSpan timeSpan = TimeSpan.FromDays(360);
-            await new OfflineResearch(instrument.Figi,CandleInterval.FiveMinutes, timeSpan, 400).Start();
+            await new OfflineResearch(instrument.Figi,CandleInterval.Minute, timeSpan, 400).Start();
             stopwatch.Stop();
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
             Console.ReadKey();
