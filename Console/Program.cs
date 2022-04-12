@@ -21,7 +21,7 @@ namespace tradeSDK
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            string ticker = "Yndx";
+            string ticker = "PHOR";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
 
             stopwatch.Start();
