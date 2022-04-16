@@ -6,6 +6,7 @@ using System.IO;
 using MarketDataModules.Candles;
 using System.Diagnostics;
 using ResearchLib;
+using Analysis.TradeDecision;
 
 namespace tradeSDK
 {
@@ -21,17 +22,10 @@ namespace tradeSDK
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            string ticker = "PHOR";
+            string ticker = "SBER";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
 
-            stopwatch.Start();
-            //List<ParabolicSarResult> parabolicSarTrand = MapperCandlesToQuote.ConvertThisCandlesToQuote(candlesList.Candles).GetParabolicSar(accelerationStep, maxAccelerationFactor, initialFactor).ToList();
-            TimeSpan timeSpan = TimeSpan.FromDays(2);
-            //await new OfflineResearch(instrument.Figi,CandleInterval.Minute, timeSpan, 400).Start();
             await new OnlineResearch(instrument.Figi, CandleInterval.Minute, 200).Start();
-            stopwatch.Stop();
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
-            Console.ReadKey();
         }
     }
 
