@@ -7,6 +7,7 @@ using MarketDataModules.Candles;
 using System.Diagnostics;
 using ResearchLib;
 using Analysis.TradeDecision;
+using System.Collections.Generic;
 
 namespace tradeSDK
 {
@@ -22,11 +23,33 @@ namespace tradeSDK
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            string ticker = "SBER";
+            string ticker = "AMZN";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
-
-            await new OnlineResearch(instrument.Figi, CandleInterval.Minute, 200).Start();
+            //Decision decision1 = TradeDecisions.Method1;
+            List<Decision> decisions = new List<Decision> { 
+                TradeDecisions.BBBorder10_02, 
+                TradeDecisions.BBBorder10_02DeleteOrder, 
+                TradeDecisions.BBBorder20_02,
+                TradeDecisions.BBBorder20_02DeleteOrder,
+                TradeDecisions.BBPercentOverCross1040,
+                TradeDecisions.BBPercentOverCross1040DeleteOrder,
+                TradeDecisions.BBPercentOverCross2010,
+                TradeDecisions.BBPercentOverCross2010DeleteOrder,
+                TradeDecisions.BBPercentPeriodCross1020,
+                TradeDecisions.BBPercentPeriodCross1020DeleteOrder,
+                TradeDecisions.BBPercentPeriodCross1030,
+                TradeDecisions.BBPercentPeriodCross1030DeleteOrder
+            };
+            OnlineResearch onlineResearch = new(instrument.Figi, CandleInterval.Minute, 400);
+            try
+            {
+                await onlineResearch.Start(decisions);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+                Log.Error(ex.StackTrace);
+            }
         }
     }
-
 }
