@@ -5,15 +5,15 @@ VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "Console\Console.csproj", "{068D2842-F965-45DA-9F76-07A0D4EEA80A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResearchLib", "TradeResearch\OfflineResearch\ResearchLib.csproj", "{5F8CAC84-8968-4B42-BFD1-934020A42FC9}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Analysis", "TradeResearch\TradeAnalysis\Analysis\Analysis.csproj", "{C23AEB32-7FEA-4158-8112-9F651EC24C80}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Indicators", "TradeResearch\TradeAnalysis\Stock.Indicators\src\Indicators.csproj", "{D1CF7CD3-2868-4E17-A6E7-EE45BF292D4A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataCollector", "TradeResearch\TradeAnalysis\BrokersAdapter\DataCollector\DataCollector.csproj", "{A4BD31EC-A9C4-4FBC-B181-AEAC70F033A6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataModules", "TradeResearch\TradeAnalysis\BrokersAdapter\TradeDataModules\MarketDataModules\MarketDataModules.csproj", "{08F42382-C63A-454E-A880-DAD4C6FDC9BE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResearchLib", "TradeResearch\TradeResearch\ResearchLib.csproj", "{99148C0F-6C98-468F-833B-56B0932D8AAE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Analysis", "TradeResearch\TradeAnalysis\Analysis\Analysis.csproj", "{081E9D8D-65B2-4365-8F6E-21B524E49DDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,14 +25,6 @@ Global
 		{068D2842-F965-45DA-9F76-07A0D4EEA80A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{068D2842-F965-45DA-9F76-07A0D4EEA80A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{068D2842-F965-45DA-9F76-07A0D4EEA80A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5F8CAC84-8968-4B42-BFD1-934020A42FC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5F8CAC84-8968-4B42-BFD1-934020A42FC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5F8CAC84-8968-4B42-BFD1-934020A42FC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5F8CAC84-8968-4B42-BFD1-934020A42FC9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C23AEB32-7FEA-4158-8112-9F651EC24C80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C23AEB32-7FEA-4158-8112-9F651EC24C80}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C23AEB32-7FEA-4158-8112-9F651EC24C80}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C23AEB32-7FEA-4158-8112-9F651EC24C80}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D1CF7CD3-2868-4E17-A6E7-EE45BF292D4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D1CF7CD3-2868-4E17-A6E7-EE45BF292D4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1CF7CD3-2868-4E17-A6E7-EE45BF292D4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,6 +37,14 @@ Global
 		{08F42382-C63A-454E-A880-DAD4C6FDC9BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08F42382-C63A-454E-A880-DAD4C6FDC9BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08F42382-C63A-454E-A880-DAD4C6FDC9BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99148C0F-6C98-468F-833B-56B0932D8AAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99148C0F-6C98-468F-833B-56B0932D8AAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99148C0F-6C98-468F-833B-56B0932D8AAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99148C0F-6C98-468F-833B-56B0932D8AAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{081E9D8D-65B2-4365-8F6E-21B524E49DDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{081E9D8D-65B2-4365-8F6E-21B524E49DDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{081E9D8D-65B2-4365-8F6E-21B524E49DDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{081E9D8D-65B2-4365-8F6E-21B524E49DDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
