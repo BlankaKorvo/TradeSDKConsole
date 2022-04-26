@@ -40,7 +40,7 @@ namespace tradeSDK
                 TradeDecisions.BBPercentPeriodCross1030,
                 TradeDecisions.BBPercentPeriodCross1030DeleteOrder
             };
-            OnlineResearch onlineResearch = new(instrument.Figi, CandleInterval.Minute, 400);
+            OnlineResearch onlineResearch = new(instrument.Figi, CandleInterval.FiveMinutes, 400);
             try
             {
                 await onlineResearch.Start(decisions);
