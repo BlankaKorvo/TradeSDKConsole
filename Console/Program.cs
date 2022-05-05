@@ -19,7 +19,12 @@ namespace tradeSDK
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
-                .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"), rollingInterval: RollingInterval.Month, fileSizeLimitBytes: 304857600, rollOnFileSizeLimit: true, retainedFileCountLimit: 7)
+                .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"),
+                              rollingInterval: RollingInterval.Month,
+                              fileSizeLimitBytes: 304857600,
+                              rollOnFileSizeLimit: true,
+                              retainedFileCountLimit: 7
+                              )
                 .CreateLogger();
 
             Stopwatch stopwatch = new Stopwatch();
