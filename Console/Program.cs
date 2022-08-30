@@ -10,6 +10,7 @@ using Analysis.TradeDecision;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Reflection.Emit;
 
 namespace tradeSDK
 {
@@ -17,16 +18,22 @@ namespace tradeSDK
     {
         static async Task Main(string[] args)
         {
+            string logTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message:lj} {NewLine}{Exception}";
             Log.Logger = new LoggerConfiguration()
+                .Enrich.WithThreadId()
+                .Enrich.WithThreadName()
                 .MinimumLevel.Debug()
-                //.WriteTo.Console()
+                //.WriteTo.Console(outputTemplate: logTemplate)
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"),
                               rollingInterval: RollingInterval.Month,
                               fileSizeLimitBytes: 304857600,
                               rollOnFileSizeLimit: true,
-                              retainedFileCountLimit: 7
+                              retainedFileCountLimit: 7,
+                              outputTemplate: logTemplate
                               )
                 .CreateLogger();
+
+            Log.Information("Start program");
 
             //int x = 1;
             string ticker = "YNDX";
@@ -40,7 +47,7 @@ namespace tradeSDK
             //    }
             //}
 
-
+            
             //Decision decision1 = TradeDecisions.Method1;
             List<Decision> decisions = new List<Decision>
             {
@@ -85,21 +92,26 @@ namespace tradeSDK
 
             try
             {
-                    Minute.Start();
-                    TwoMinutes.Start();
-                    ThreeMinutes.Start();
-                    FiveMinutes.Start();
-                    TenMinutes.Start();
-                    QuarterHour.Start();
-                    HalfHour.Start();
-                    Hour.Start();
-                    Day.Start();
+                Minute.Start();
+                TwoMinutes.Start();
+                ThreeMinutes.Start();
+                FiveMinutes.Start();
+                TenMinutes.Start();
+                QuarterHour.Start();
+                HalfHour.Start();
+                Hour.Start();
+                Day.Start();
                 while (true) { };
             }
             catch (Exception ex)
             {
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
+                
+            }
+            finally
+            {
+                Log.Information("Stop program");
             }
         }
     }
