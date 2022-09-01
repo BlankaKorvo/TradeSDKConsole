@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Reflection.Emit;
+using MarketDataModules.Orderbooks;
 
 namespace tradeSDK
 {
@@ -21,8 +22,8 @@ namespace tradeSDK
             string logTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message:lj} {NewLine}{Exception}";
             Log.Logger = new LoggerConfiguration()
                 .Enrich.WithThreadId()
-                .Enrich.WithThreadName()
-                .MinimumLevel.Debug()
+                //.Enrich.WithThreadName()
+                .MinimumLevel.Information()
                 //.WriteTo.Console(outputTemplate: logTemplate)
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"),
                               rollingInterval: RollingInterval.Month,
@@ -62,6 +63,7 @@ namespace tradeSDK
                     decisions.Add(item.CreateDelegate<Decision>());
                 }
             }
+            Thread GetOrder = new Thread(async () => await Kostyl.GetOrderbook(instrument.Figi));
 
             OnlineResearch onlineResearchMinute = new(instrument.Figi, CandleInterval.Minute, 400, decisions);
             Thread Minute = new Thread(async () => await onlineResearchMinute.Start());
@@ -92,15 +94,16 @@ namespace tradeSDK
 
             try
             {
+                GetOrder.Start();
                 Minute.Start();
                 TwoMinutes.Start();
                 ThreeMinutes.Start();
                 FiveMinutes.Start();
-                TenMinutes.Start();
-                QuarterHour.Start();
-                HalfHour.Start();
-                Hour.Start();
-                Day.Start();
+                //TenMinutes.Start();
+                //QuarterHour.Start();
+                //HalfHour.Start();
+                //Hour.Start();
+                //Day.Start();
                 while (true) { };
             }
             catch (Exception ex)
