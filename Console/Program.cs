@@ -95,15 +95,17 @@ namespace tradeSDK
             try
             {
                 GetOrder.Start();
-                Minute.Start();
-                TwoMinutes.Start();
-                ThreeMinutes.Start();
+                //Minute.Start();
+                //TwoMinutes.Start();
+                //ThreeMinutes.Start();
                 FiveMinutes.Start();
                 //TenMinutes.Start();
                 //QuarterHour.Start();
                 //HalfHour.Start();
                 //Hour.Start();
                 //Day.Start();
+                //GetOrder.Join();
+                //FiveMinutes.Join();
                 while (true) { };
             }
             catch (Exception ex)
