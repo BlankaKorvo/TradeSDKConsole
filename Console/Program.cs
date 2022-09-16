@@ -12,6 +12,8 @@ using System.Linq;
 using System.Threading;
 using System.Reflection.Emit;
 using MarketDataModules.Orderbooks;
+using System.Timers;
+using MarketDataModules.Instruments;
 
 namespace tradeSDK
 {
@@ -19,10 +21,10 @@ namespace tradeSDK
     {
         static async Task Main(string[] args)
         {
-            string logTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message:lj} {NewLine}{Exception}";
+            string logTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> <{ThreadName}> {Message:lj} {NewLine}{Exception}";
             Log.Logger = new LoggerConfiguration()
                 .Enrich.WithThreadId()
-                //.Enrich.WithThreadName()
+                .Enrich.WithThreadName()
                 .MinimumLevel.Information()
                 //.WriteTo.Console(outputTemplate: logTemplate)
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"),
@@ -36,6 +38,34 @@ namespace tradeSDK
 
             Log.Information("Start program");
 
+
+
+            //List<Instrument> instrumentsRub = new();
+            //List<Instrument> instrumentsRubLong = new();
+            //var instruments = await GetMarketData.GetInstrumentListAsync();
+            //foreach (var intrument in instruments.Instruments)
+            //{
+            //    if (intrument.Currency == Currency.Usd && intrument.Type == InstrumentType.Stock)
+            //    {
+            //        instrumentsRub.Add(intrument);
+            //    }
+            //}
+
+            //foreach (var instrument in instrumentsRub)
+            //{
+            //    var candles = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.FiveMinutes, 400);
+            //    Orderbook orderbook = await GetMarketData.GetOrderbookAsync(instrument.Figi, 20);
+            //    var result = TradeDecisions.BBPercent200_20Volume5_10(candles, orderbook);
+            //    if (result == MarketDataModules.Trading.TradeTarget.toLong)
+            //    {
+            //        Console.WriteLine(instrument.Name);
+            //    }
+            //}
+            //Console.WriteLine("END");
+
+
+
+            #region Trade
             //int x = 1;
             string ticker = "YNDX";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
@@ -48,7 +78,6 @@ namespace tradeSDK
             //    }
             //}
 
-            
             //Decision decision1 = TradeDecisions.Method1;
             List<Decision> decisions = new List<Decision>
             {
@@ -63,61 +92,58 @@ namespace tradeSDK
                     decisions.Add(item.CreateDelegate<Decision>());
                 }
             }
-            Thread GetOrder = new Thread(async () => await Kostyl.GetOrderbook(instrument.Figi));
+            Task GetOrder = new Task(async () => await Kostyl.GetOrderbook(instrument.Figi));
+            //GetOrder.Priority = ThreadPriority.Highest;
 
             OnlineResearch onlineResearchMinute = new(instrument.Figi, CandleInterval.Minute, 400, decisions);
-            Thread Minute = new Thread(async () => await onlineResearchMinute.Start());
+            Task Minute = new Task(async () => await onlineResearchMinute.Start());
 
             OnlineResearch onlineResearchTwoMinutes = new(instrument.Figi, CandleInterval.TwoMinutes, 400, decisions);
-            Thread TwoMinutes = new Thread(async () => await onlineResearchTwoMinutes.Start());
+            Task TwoMinutes = new Task(async () => await onlineResearchTwoMinutes.Start());
 
             OnlineResearch onlineResearchThreeMinutes = new(instrument.Figi, CandleInterval.ThreeMinutes, 400, decisions);
-            Thread ThreeMinutes = new Thread(async () => await onlineResearchThreeMinutes.Start());
+            Task ThreeMinutes = new Task(async () => await onlineResearchThreeMinutes.Start());
 
             OnlineResearch onlineResearchFiveMinutes = new(instrument.Figi, CandleInterval.FiveMinutes, 400, decisions);
-            Thread FiveMinutes = new Thread(async () => await onlineResearchFiveMinutes.Start());
+            Task FiveMinutes = new Task(async () => await onlineResearchFiveMinutes.Start());
+
 
             OnlineResearch onlineResearchTenMinutes = new(instrument.Figi, CandleInterval.TenMinutes, 400, decisions);
-            Thread TenMinutes = new Thread(async () => await onlineResearchTenMinutes.Start());
+            Task TenMinutes = new Task(async () => await onlineResearchTenMinutes.Start());
 
             OnlineResearch onlineResearchQuarterHour = new(instrument.Figi, CandleInterval.QuarterHour, 400, decisions);
-            Thread QuarterHour = new Thread(async () => await onlineResearchQuarterHour.Start());
+            Task QuarterHour = new Task(async () => await onlineResearchQuarterHour.Start());
 
             OnlineResearch onlineResearchHalfHour = new(instrument.Figi, CandleInterval.HalfHour, 400, decisions);
-            Thread HalfHour = new Thread(async () => await onlineResearchHalfHour.Start());
+            Task HalfHour = new Task(async () => await onlineResearchHalfHour.Start());
 
             OnlineResearch onlineResearchHour = new(instrument.Figi, CandleInterval.Hour, 400, decisions);
-            Thread Hour = new Thread(async () => await onlineResearchHour.Start());
+            Task Hour = new Task(async () => await onlineResearchHour.Start());
 
             OnlineResearch onlineResearchDay = new(instrument.Figi, CandleInterval.Day, 400, decisions);
-            Thread Day = new Thread(async () => await onlineResearchDay.Start());
+            Task Day = new Task(async () => await onlineResearchDay.Start());
 
-            try
-            {
-                GetOrder.Start();
-                Minute.Start();
-                TwoMinutes.Start();
-                ThreeMinutes.Start();
-                FiveMinutes.Start();
-                //TenMinutes.Start();
-                //QuarterHour.Start();
-                //HalfHour.Start();
-                //Hour.Start();
-                //Day.Start();
-                //GetOrder.Join();
-                //FiveMinutes.Join();
-                while (true) { };
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.Message);
-                Log.Error(ex.StackTrace);
-                
-            }
-            finally
-            {
-                Log.Information("Stop program");
-            }
+
+
+            GetOrder.Start();
+            Thread.Sleep(100);
+            //Minute.Start();
+            //TwoMinutes.Start();
+            //ThreeMinutes.Start();
+            FiveMinutes.Start();
+            //TenMinutes.Start();
+            //QuarterHour.Start();
+            //HalfHour.Start();
+            //Hour.Start();
+            //Day.Start();
+            //GetOrder.Join();
+            //FiveMinutes.Join();
+
+            Task.WaitAny(GetOrder, FiveMinutes);
+            //while (true) { };
+
+            //Log.Information("Stop program");
+            #endregion
         }
     }
 }
