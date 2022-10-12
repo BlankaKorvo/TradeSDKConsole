@@ -67,7 +67,7 @@ namespace tradeSDK
 
             #region Trade
             //int x = 1;
-            string ticker = "YNDX";
+            string ticker = "TCSG";
             var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
             //CandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.Day, 1000);
             //using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"), true, System.Text.Encoding.Default))
@@ -127,20 +127,20 @@ namespace tradeSDK
 
             GetOrder.Start();
             Thread.Sleep(100);
-            //Minute.Start();
-            //TwoMinutes.Start();
-            //ThreeMinutes.Start();
+            Minute.Start();
+            TwoMinutes.Start();
+            ThreeMinutes.Start();
             FiveMinutes.Start();
-            //TenMinutes.Start();
-            //QuarterHour.Start();
-            //HalfHour.Start();
-            //Hour.Start();
-            //Day.Start();
+            TenMinutes.Start();
+            QuarterHour.Start();
+            HalfHour.Start();
+            Hour.Start();
+            Day.Start();
             //GetOrder.Join();
             //FiveMinutes.Join();
 
-            Task.WaitAny(GetOrder, FiveMinutes);
-            //while (true) { };
+            //Task.WaitAny(GetOrder, FiveMinutes);
+            while (true) { };
 
             //Log.Information("Stop program");
             #endregion
