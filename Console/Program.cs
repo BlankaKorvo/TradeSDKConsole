@@ -63,6 +63,8 @@ namespace tradeSDK
             //}
             //Console.WriteLine("END");
 
+            PortfolioEmulator portfolioEmulator = new PortfolioEmulator();
+            portfolioEmulator.CreationPortfolioDB();
 
 
             #region Trade
