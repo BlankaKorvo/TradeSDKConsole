@@ -14,6 +14,8 @@ using System.Reflection.Emit;
 using MarketDataModules.Orderbooks;
 using System.Timers;
 using MarketDataModules.Instruments;
+using static MarketDataModules.Portfolio.Portfolio;
+//using Tinkoff.InvestApi.V1;
 
 namespace tradeSDK
 {
@@ -63,8 +65,31 @@ namespace tradeSDK
             //}
             //Console.WriteLine("END");
 
+            List<Position> portfolioPositions = new List<Position>();
             PortfolioEmulator portfolioEmulator = new PortfolioEmulator();
             portfolioEmulator.CreationPortfolioDB();
+            if (portfolioEmulator.IsPositionAvailable("figi"))
+            {
+                portfolioEmulator.AddPosition("figi", "ticker", 0.12m);
+            }
+            if (portfolioEmulator.IsPositionAvailable("figi1"))
+            {
+                portfolioEmulator.AddPosition("figi1", "ticker", 0.12m);
+            }
+            if (portfolioEmulator.IsPositionAvailable("figi1"))
+            {
+                portfolioEmulator.RemovePosition("figi1");
+            }
+            if (portfolioEmulator.IsPositionAvailable("figi"))
+            {
+                portfolioEmulator.RemovePosition("figi");
+            }
+            if (portfolioEmulator.IsPositionAvailable("figi2"))
+            {
+                portfolioEmulator.RemovePosition("figi2");
+            }
+
+            Console.ReadKey();
 
 
             #region Trade
