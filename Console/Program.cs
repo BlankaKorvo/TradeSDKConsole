@@ -119,7 +119,7 @@ namespace tradeSDK
                     decisions.Add(item.CreateDelegate<Decision>());
                 }
             }
-            Task GetOrder = new Task(async () => await Kostyl.GetOrderbook(instrument.Figi));
+            Task GetOrder = new Task(async () => await LockOrderbook.GetOrderbook(instrument.Figi));
             //GetOrder.Priority = ThreadPriority.Highest;
 
             OnlineResearch onlineResearchMinute = new(instrument.Figi, CandleInterval.Minute, 400, decisions);
@@ -158,11 +158,11 @@ namespace tradeSDK
             TwoMinutes.Start();
             ThreeMinutes.Start();
             FiveMinutes.Start();
-            TenMinutes.Start();
-            QuarterHour.Start();
-            HalfHour.Start();
-            Hour.Start();
-            Day.Start();
+            //TenMinutes.Start();
+            //QuarterHour.Start();
+            //HalfHour.Start();
+            //Hour.Start();
+            //Day.Start();
             //GetOrder.Join();
             //FiveMinutes.Join();
 
