@@ -10,11 +10,11 @@ using Analysis.TradeDecision;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Reflection.Emit;
-using MarketDataModules.Orderbooks;
-using System.Timers;
-using MarketDataModules.Instruments;
-using static MarketDataModules.Portfolio.Portfolio;
+
+using ResearchLib.SyntTradeResultDatabase.Client;
+using System.Transactions;
+using MarketDataModules.Trading;
+using ResearchLib.SyntetResultDatabase.Model;
 //using Tinkoff.InvestApi.V1;
 
 namespace tradeSDK
@@ -65,29 +65,36 @@ namespace tradeSDK
             //}
             //Console.WriteLine("END");
 
-            List<Position> portfolioPositions = new List<Position>();
-            PortfolioEmulator portfolioEmulator = new PortfolioEmulator();
-            portfolioEmulator.CreationPortfolioDB();
-            if (portfolioEmulator.IsPositionAvailable("figi"))
+            //List<Position> portfolioPositions = new List<Position>();
+            //PortfolioEmulator portfolioEmulator = new PortfolioEmulator();
+            DbEdit.DeleteDb();
+            
+            PortfolioDbEdit.Add(CandleInterval.FiveMinutes);
+            if (!PositionDbEdit.IsAvailable("figi", CandleInterval.FiveMinutes))
             {
-                portfolioEmulator.AddPosition("figi", "ticker", 0.12m);
+                PositionDbEdit.Add("figi", CandleInterval.FiveMinutes, "ticker", 0.12m, 1);
+                PositionDbEdit.Add("figi3", CandleInterval.FiveMinutes, "ticker", 0.12m, 1);
+                PositionDbEdit.Add("figi", CandleInterval.Hour, "ticker", 0.12m, 1);
             }
-            if (portfolioEmulator.IsPositionAvailable("figi1"))
+            if (!PositionDbEdit.IsAvailable("figi1", CandleInterval.Minute))
             {
-                portfolioEmulator.AddPosition("figi1", "ticker", 0.12m);
+                PositionDbEdit.Add("figi1", CandleInterval.Minute,  "ticker", 0.12m, 1);
             }
-            if (portfolioEmulator.IsPositionAvailable("figi1"))
-            {
-                portfolioEmulator.RemovePosition("figi1");
-            }
-            if (portfolioEmulator.IsPositionAvailable("figi"))
-            {
-                portfolioEmulator.RemovePosition("figi");
-            }
-            if (portfolioEmulator.IsPositionAvailable("figi2"))
-            {
-                portfolioEmulator.RemovePosition("figi2");
-            }
+            TransactionDbEdit.Add("figi", CandleInterval.FiveMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
+            TransactionDbEdit.Add("figi", CandleInterval.TenMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
+
+                //if (portfolioEmulator.IsPositionAvailable("figi1", CandleInterval.FiveMinutes))
+                //{
+                //    portfolioEmulator.RemovePosition("figi1", CandleInterval.FiveMinutes);
+                //}
+                //if (portfolioEmulator.IsPositionAvailable("figi", CandleInterval.FiveMinutes))
+                //{
+                //    portfolioEmulator.RemovePosition("figi", CandleInterval.FiveMinutes);
+                //}
+                //if (portfolioEmulator.IsPositionAvailable("figi2", CandleInterval.FiveMinutes))
+                //{
+                //    portfolioEmulator.RemovePosition("figi2", CandleInterval.FiveMinutes);
+                //}
 
             Console.ReadKey();
 
