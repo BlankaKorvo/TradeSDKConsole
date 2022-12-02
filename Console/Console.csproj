@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Tinkoff\invest-api-csharp-sdk\Tinkoff.InvestApi\Tinkoff.InvestApi.csproj" />
     <ProjectReference Include="..\TradeResearch\TradeAnalysis\BrokersAdapter\DataCollector\DataCollector.csproj" />
     <ProjectReference Include="..\TradeResearch\TradeAnalysis\BrokersAdapter\TradeDataModules\MarketDataModules\MarketDataModules.csproj" />
     <ProjectReference Include="..\TradeResearch\TradeResearch\ResearchLib.csproj" />
