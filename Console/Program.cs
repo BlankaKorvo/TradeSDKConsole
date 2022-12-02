@@ -15,6 +15,10 @@ using ResearchLib.SyntTradeResultDatabase.Client;
 using System.Transactions;
 using MarketDataModules.Trading;
 using ResearchLib.SyntetResultDatabase.Model;
+using Google.Protobuf.WellKnownTypes;
+using Tinkoff.InvestApi.V1;
+using Tinkoff.InvestApi;
+using Google.Protobuf.Collections;
 //using Tinkoff.InvestApi.V1;
 
 namespace tradeSDK
@@ -40,7 +44,22 @@ namespace tradeSDK
 
             Log.Information("Start program");
 
+            string tickerr = "TCSG";
+            var instrumentt = await GetMarketData.GetInstrumentByTickerAsync(tickerr);
+            string figi = instrumentt.Figi;
+            string token = File.ReadAllLines("toksann.dll")[0].Trim();
+            InvestApiClient client = InvestApiClientFactory.Create(token);
+            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() { Figi = figi, From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-6)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow) };
+            var result = client.MarketData.GetCandles(getCandlesRequest);
+            List<HistoricCandle> candles = result.Candles.ToList();
+            Console.WriteLine(candles.Count);
+            foreach (var item in candles)
+            {
+                Console.WriteLine(item.Close.Units + " " + item.Time);
+            }    
 
+
+            Console.ReadKey();
 
             //List<Instrument> instrumentsRub = new();
             //List<Instrument> instrumentsRubLong = new();
@@ -69,19 +88,19 @@ namespace tradeSDK
             //PortfolioEmulator portfolioEmulator = new PortfolioEmulator();
             DbEdit.DeleteDb();
             
-            PortfolioDbEdit.Add(CandleInterval.FiveMinutes);
-            if (!PositionDbEdit.IsAvailable("figi", CandleInterval.FiveMinutes))
+            PortfolioDbEdit.Add(MarketDataModules.Candles.CandleInterval.FiveMinutes);
+            if (!PositionDbEdit.IsAvailable("figi", MarketDataModules.Candles.CandleInterval.FiveMinutes))
             {
-                PositionDbEdit.Add("figi", CandleInterval.FiveMinutes, "ticker", 0.12m, 1);
-                PositionDbEdit.Add("figi3", CandleInterval.FiveMinutes, "ticker", 0.12m, 1);
-                PositionDbEdit.Add("figi", CandleInterval.Hour, "ticker", 0.12m, 1);
+                PositionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.FiveMinutes, "ticker", 0.12m, 1);
+                PositionDbEdit.Add("figi3", MarketDataModules.Candles.CandleInterval.FiveMinutes, "ticker", 0.12m, 1);
+                PositionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.Hour, "ticker", 0.12m, 1);
             }
-            if (!PositionDbEdit.IsAvailable("figi1", CandleInterval.Minute))
+            if (!PositionDbEdit.IsAvailable("figi1", MarketDataModules.Candles.CandleInterval.Minute))
             {
-                PositionDbEdit.Add("figi1", CandleInterval.Minute,  "ticker", 0.12m, 1);
+                PositionDbEdit.Add("figi1", MarketDataModules.Candles.CandleInterval.Minute,  "ticker", 0.12m, 1);
             }
-            TransactionDbEdit.Add("figi", CandleInterval.FiveMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
-            TransactionDbEdit.Add("figi", CandleInterval.TenMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
+            TransactionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.FiveMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
+            TransactionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.TenMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
 
                 //if (portfolioEmulator.IsPositionAvailable("figi1", CandleInterval.FiveMinutes))
                 //{
@@ -129,32 +148,32 @@ namespace tradeSDK
             Task GetOrder = new Task(async () => await LockOrderbook.GetOrderbook(instrument.Figi));
             //GetOrder.Priority = ThreadPriority.Highest;
 
-            OnlineResearch onlineResearchMinute = new(instrument.Figi, CandleInterval.Minute, 400, decisions);
+            OnlineResearch onlineResearchMinute = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Minute, 400, decisions);
             Task Minute = new Task(async () => await onlineResearchMinute.Start());
 
-            OnlineResearch onlineResearchTwoMinutes = new(instrument.Figi, CandleInterval.TwoMinutes, 400, decisions);
+            OnlineResearch onlineResearchTwoMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TwoMinutes, 400, decisions);
             Task TwoMinutes = new Task(async () => await onlineResearchTwoMinutes.Start());
 
-            OnlineResearch onlineResearchThreeMinutes = new(instrument.Figi, CandleInterval.ThreeMinutes, 400, decisions);
+            OnlineResearch onlineResearchThreeMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.ThreeMinutes, 400, decisions);
             Task ThreeMinutes = new Task(async () => await onlineResearchThreeMinutes.Start());
 
-            OnlineResearch onlineResearchFiveMinutes = new(instrument.Figi, CandleInterval.FiveMinutes, 400, decisions);
+            OnlineResearch onlineResearchFiveMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.FiveMinutes, 400, decisions);
             Task FiveMinutes = new Task(async () => await onlineResearchFiveMinutes.Start());
 
 
-            OnlineResearch onlineResearchTenMinutes = new(instrument.Figi, CandleInterval.TenMinutes, 400, decisions);
+            OnlineResearch onlineResearchTenMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TenMinutes, 400, decisions);
             Task TenMinutes = new Task(async () => await onlineResearchTenMinutes.Start());
 
-            OnlineResearch onlineResearchQuarterHour = new(instrument.Figi, CandleInterval.QuarterHour, 400, decisions);
+            OnlineResearch onlineResearchQuarterHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.QuarterHour, 400, decisions);
             Task QuarterHour = new Task(async () => await onlineResearchQuarterHour.Start());
 
-            OnlineResearch onlineResearchHalfHour = new(instrument.Figi, CandleInterval.HalfHour, 400, decisions);
+            OnlineResearch onlineResearchHalfHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.HalfHour, 400, decisions);
             Task HalfHour = new Task(async () => await onlineResearchHalfHour.Start());
 
-            OnlineResearch onlineResearchHour = new(instrument.Figi, CandleInterval.Hour, 400, decisions);
+            OnlineResearch onlineResearchHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Hour, 400, decisions);
             Task Hour = new Task(async () => await onlineResearchHour.Start());
 
-            OnlineResearch onlineResearchDay = new(instrument.Figi, CandleInterval.Day, 400, decisions);
+            OnlineResearch onlineResearchDay = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Day, 400, decisions);
             Task Day = new Task(async () => await onlineResearchDay.Start());
 
 
