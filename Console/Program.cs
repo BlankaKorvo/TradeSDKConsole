@@ -16,10 +16,11 @@ using System.Transactions;
 using MarketDataModules.Trading;
 using ResearchLib.SyntetResultDatabase.Model;
 using Google.Protobuf.WellKnownTypes;
-using Tinkoff.InvestApi.V1;
+//using Tinkoff.InvestApi.V1;
 using Tinkoff.InvestApi;
 using Google.Protobuf.Collections;
-//using Tinkoff.InvestApi.V1;
+using DataCollector.TinkoffAdapterGrpc;
+//using TinkoffLegacy.InvestApi.V1;
 
 namespace tradeSDK
 {
@@ -32,7 +33,7 @@ namespace tradeSDK
                 .Enrich.WithThreadId()
                 .Enrich.WithThreadName()
                 .MinimumLevel.Information()
-                //.WriteTo.Console(outputTemplate: logTemplate)
+                .WriteTo.Console(outputTemplate: logTemplate)
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"),
                               rollingInterval: RollingInterval.Month,
                               fileSizeLimitBytes: 304857600,
@@ -47,15 +48,19 @@ namespace tradeSDK
             string tickerr = "TCSG";
             var instrumentt = await GetMarketData.GetInstrumentByTickerAsync(tickerr);
             string figi = instrumentt.Figi;
-            string token = File.ReadAllLines("toksann.dll")[0].Trim();
-            InvestApiClient client = GetClient.Grpc;
-            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() { Figi = figi, From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-1)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow) };
-            var result = client.MarketData.GetCandles(getCandlesRequest);
-            List<HistoricCandle> candles = result.Candles.ToList();
-            Console.WriteLine(candles.Count);
-            foreach (var item in candles)
+            var candles = await GetMarketData.GetCandlesAsync(instrumentt.Figi, CandleInterval.FiveMinutes, 400);
+
+
+
+            //string token = File.ReadAllLines("toksann.dll")[0].Trim();
+            //InvestApiClient client = GetClient.Grpc;
+            //GetCandlesRequest getCandlesRequest = new GetCandlesRequest() { Figi = figi, From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-1)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow) };
+            //var result = client.MarketData.GetCandles(getCandlesRequest);
+            //List<HistoricCandle> candles = result.Candles.ToList();
+            //Console.WriteLine(candles.Count);
+            foreach (var item in candles.Candles)
             {
-                Console.WriteLine(item.Close.Units + " " + item.Time);
+                Console.WriteLine(item.Close + " " + item.Time);
             }    
 
 
