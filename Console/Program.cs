@@ -48,8 +48,8 @@ namespace tradeSDK
             var instrumentt = await GetMarketData.GetInstrumentByTickerAsync(tickerr);
             string figi = instrumentt.Figi;
             string token = File.ReadAllLines("toksann.dll")[0].Trim();
-            InvestApiClient client = InvestApiClientFactory.Create(token);
-            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() { Figi = figi, From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-6)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow) };
+            InvestApiClient client = GetClient.Grpc;
+            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() { Figi = figi, From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-1)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow) };
             var result = client.MarketData.GetCandles(getCandlesRequest);
             List<HistoricCandle> candles = result.Candles.ToList();
             Console.WriteLine(candles.Count);
