@@ -49,17 +49,15 @@ namespace tradeSDK
 
 
 
-
-
-            string token = File.ReadAllLines("toksann.dll")[0].Trim();
-            InvestApiClient client = InvestApiClientFactory.Create(token);
+            //string token = File.ReadAllLines("toksann.dll")[0].Trim();
+            InvestApiClient client = GetClient.Grpc;
             var instruments = client.Instruments.Shares();
             var instr = instruments.Instruments.First(x => x.Ticker == "YNDX");
             Console.WriteLine($"{instr.ClassCode} {instr.Uid}");
             //InstrumentRequest InstrumentRequest = new InstrumentRequest() {IdType = InstrumentIdType.Ticker, ClassCode = "", Id = "YNDX" };
             //var instrument = client.Instruments.GetInstrumentBy(InstrumentRequest);
             //Console.WriteLine(instrument.Instrument.Uid);
-            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() {InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c", From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-10)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow)};
+            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() {InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c", /*From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-10)),*/ Interval = Tinkoff.InvestApi.V1.CandleInterval._1Min, To = Timestamp.FromDateTime(DateTime.UtcNow)};
             //GetCandlesResponse result = client.MarketData.GetCandles(getCandlesRequest);
             //List<HistoricCandle> candles = result.Candles.ToList();
             GetTinkoffCandles getTinkoffCandles = new GetTinkoffCandles() {Client = client, FullCandlesRequest = getCandlesRequest, CandleCount = 1000000000 };
@@ -85,7 +83,7 @@ namespace tradeSDK
             //string tickerr = "TCSG";
             //var instrumentt = await GetMarketData.GetInstrumentByTickerAsync(tickerr);
             //string figi = instrumentt.Figi;
-            //var candles = await GetMarketData.GetCandlesAsync(instrumentt.Figi, CandleInterval.FiveMinutes, 400);
+            //var candles = await GetMarketData.GetCandles(instrumentt.Figi, CandleInterval.FiveMinutes, 400);
 
 
             ////string token = File.ReadAllLines("toksann.dll")[0].Trim();
@@ -115,7 +113,7 @@ namespace tradeSDK
 
             //foreach (var instrument in instrumentsRub)
             //{
-            //    var candles = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.FiveMinutes, 400);
+            //    var candles = await GetMarketData.GetCandles(instrument.Figi, CandleInterval.FiveMinutes, 400);
             //    Orderbook orderbook = await GetMarketData.GetOrderbookAsync(instrument.Figi, 20);
             //    var result = TradeDecisions.BBPercent200_20Volume5_10(candles, orderbook);
             //    if (result == MarketDataModules.Trading.TradeTarget.toLong)
@@ -141,7 +139,7 @@ namespace tradeSDK
                 PositionDbEdit.Add("figi1", MarketDataModules.Candles.CandleInterval.Minute,  "ticker", 0.12m, 1);
             }
             TransactionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.FiveMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
-            TransactionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.TenMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
+            //TransactionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.TenMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
 
                 //if (portfolioEmulator.IsPositionAvailable("figi1", CandleInterval.FiveMinutes))
                 //{
@@ -163,7 +161,7 @@ namespace tradeSDK
         //    //int x = 1;
         //    string ticker = "TCSG";
         //    //var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
-        //    //CandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.Day, 1000);
+        //    //CandlesList candlesList = await GetMarketData.GetCandles(instrument.Figi, CandleInterval.Day, 1000);
         //    //using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"), true, System.Text.Encoding.Default))
         //    //{
         //    //    foreach (var candle in candlesList.Candles)
