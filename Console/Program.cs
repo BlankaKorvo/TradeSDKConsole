@@ -20,6 +20,8 @@ using Google.Protobuf.WellKnownTypes;
 using Tinkoff.InvestApi;
 using Google.Protobuf.Collections;
 using DataCollector.TinkoffAdapterGrpc;
+using Microsoft.Extensions.DependencyInjection;
+using Tinkoff.InvestApi.V1;
 //using TinkoffLegacy.InvestApi.V1;
 
 namespace tradeSDK
@@ -32,7 +34,7 @@ namespace tradeSDK
             Log.Logger = new LoggerConfiguration()
                 .Enrich.WithThreadId()
                 .Enrich.WithThreadName()
-                .MinimumLevel.Information()
+                .MinimumLevel.Debug()
                 .WriteTo.Console(outputTemplate: logTemplate)
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"),
                               rollingInterval: RollingInterval.Month,
@@ -45,23 +47,57 @@ namespace tradeSDK
 
             Log.Information("Start program");
 
-            string tickerr = "TCSG";
-            var instrumentt = await GetMarketData.GetInstrumentByTickerAsync(tickerr);
-            string figi = instrumentt.Figi;
-            var candles = await GetMarketData.GetCandlesAsync(instrumentt.Figi, CandleInterval.FiveMinutes, 400);
 
 
 
-            //string token = File.ReadAllLines("toksann.dll")[0].Trim();
-            //InvestApiClient client = GetClient.Grpc;
-            //GetCandlesRequest getCandlesRequest = new GetCandlesRequest() { Figi = figi, From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-1)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow) };
-            //var result = client.MarketData.GetCandles(getCandlesRequest);
+
+            string token = File.ReadAllLines("toksann.dll")[0].Trim();
+            InvestApiClient client = InvestApiClientFactory.Create(token);
+            var instruments = client.Instruments.Shares();
+            var instr = instruments.Instruments.First(x => x.Ticker == "YNDX");
+            Console.WriteLine($"{instr.ClassCode} {instr.Uid}");
+            //InstrumentRequest InstrumentRequest = new InstrumentRequest() {IdType = InstrumentIdType.Ticker, ClassCode = "", Id = "YNDX" };
+            //var instrument = client.Instruments.GetInstrumentBy(InstrumentRequest);
+            //Console.WriteLine(instrument.Instrument.Uid);
+            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() {InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c", From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-10)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow)};
+            //GetCandlesResponse result = client.MarketData.GetCandles(getCandlesRequest);
             //List<HistoricCandle> candles = result.Candles.ToList();
-            //Console.WriteLine(candles.Count);
-            foreach (var item in candles.Candles)
+            GetTinkoffCandles getTinkoffCandles = new GetTinkoffCandles() {Client = client, FullCandlesRequest = getCandlesRequest, CandleCount = 1000000000 };
+            var candles = getTinkoffCandles.GetSetCandles();
+            
+            foreach ( var candle in candles)
             {
-                Console.WriteLine(item.Close + " " + item.Time);
-            }    
+                Console.WriteLine(candle.IsComplete);
+                Console.WriteLine(candle.Close);
+                Console.WriteLine(candle.Time);
+            }
+            Console.WriteLine(candles.Count);
+            Console.ReadKey();
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            //string tickerr = "TCSG";
+            //var instrumentt = await GetMarketData.GetInstrumentByTickerAsync(tickerr);
+            //string figi = instrumentt.Figi;
+            //var candles = await GetMarketData.GetCandlesAsync(instrumentt.Figi, CandleInterval.FiveMinutes, 400);
+
+
+            ////string token = File.ReadAllLines("toksann.dll")[0].Trim();
+            ////InvestApiClient client = GetClient.Grpc;
+            ////GetCandlesRequest getCandlesRequest = new GetCandlesRequest() { Figi = figi, From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-1)), Interval = Tinkoff.InvestApi.V1.CandleInterval._5Min, To = Timestamp.FromDateTime(DateTime.UtcNow) };
+            ////var result = client.MarketData.GetCandles(getCandlesRequest);
+            ////List<HistoricCandle> candles = result.Candles.ToList();
+            ////Console.WriteLine(candles.Count);
+            //foreach (var item in candles.Candles)
+            //{
+            //    Console.WriteLine(item.Close + " " + item.Time);
+            //}    
 
 
             Console.ReadKey();
@@ -123,85 +159,85 @@ namespace tradeSDK
             Console.ReadKey();
 
 
-            #region Trade
-            //int x = 1;
-            string ticker = "TCSG";
-            var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
-            //CandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.Day, 1000);
-            //using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"), true, System.Text.Encoding.Default))
-            //{
-            //    foreach (var candle in candlesList.Candles)
-            //    {
-            //            sw.WriteLine($"{x++};{candle.Close}");                
-            //    }
-            //}
+        //    #region Trade
+        //    //int x = 1;
+        //    string ticker = "TCSG";
+        //    //var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
+        //    //CandlesList candlesList = await GetMarketData.GetCandlesAsync(instrument.Figi, CandleInterval.Day, 1000);
+        //    //using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"), true, System.Text.Encoding.Default))
+        //    //{
+        //    //    foreach (var candle in candlesList.Candles)
+        //    //    {
+        //    //            sw.WriteLine($"{x++};{candle.Close}");                
+        //    //    }
+        //    //}
 
-            //Decision decision1 = TradeDecisions.Method1;
-            List<Decision> decisions = new List<Decision>
-            {
+        //    //Decision decision1 = TradeDecisions.Method1;
+        //    List<Decision> decisions = new List<Decision>
+        //    {
 
-            };
+        //    };
 
-            var x = typeof(TradeDecisions).GetMethods();
-            foreach (var item in x.Where(x => x.IsStatic))
-            {
-                if (item.DeclaringType == typeof(TradeDecisions))
-                {
-                    decisions.Add(item.CreateDelegate<Decision>());
-                }
-            }
-            Task GetOrder = new Task(async () => await LockOrderbook.GetOrderbook(instrument.Figi));
-            //GetOrder.Priority = ThreadPriority.Highest;
+        //    var x = typeof(TradeDecisions).GetMethods();
+        //    foreach (var item in x.Where(x => x.IsStatic))
+        //    {
+        //        if (item.DeclaringType == typeof(TradeDecisions))
+        //        {
+        //            decisions.Add(item.CreateDelegate<Decision>());
+        //        }
+        //    }
+        //    Task GetOrder = new Task(async () => await LockOrderbook.GetOrderbook(instrument.Figi));
+        //    //GetOrder.Priority = ThreadPriority.Highest;
 
-            OnlineResearch onlineResearchMinute = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Minute, 400, decisions);
-            Task Minute = new Task(async () => await onlineResearchMinute.Start());
+        //    OnlineResearch onlineResearchMinute = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Minute, 400, decisions);
+        //    Task Minute = new Task(async () => await onlineResearchMinute.Start());
 
-            OnlineResearch onlineResearchTwoMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TwoMinutes, 400, decisions);
-            Task TwoMinutes = new Task(async () => await onlineResearchTwoMinutes.Start());
+        //    OnlineResearch onlineResearchTwoMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TwoMinutes, 400, decisions);
+        //    Task TwoMinutes = new Task(async () => await onlineResearchTwoMinutes.Start());
 
-            OnlineResearch onlineResearchThreeMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.ThreeMinutes, 400, decisions);
-            Task ThreeMinutes = new Task(async () => await onlineResearchThreeMinutes.Start());
+        //    OnlineResearch onlineResearchThreeMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.ThreeMinutes, 400, decisions);
+        //    Task ThreeMinutes = new Task(async () => await onlineResearchThreeMinutes.Start());
 
-            OnlineResearch onlineResearchFiveMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.FiveMinutes, 400, decisions);
-            Task FiveMinutes = new Task(async () => await onlineResearchFiveMinutes.Start());
-
-
-            OnlineResearch onlineResearchTenMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TenMinutes, 400, decisions);
-            Task TenMinutes = new Task(async () => await onlineResearchTenMinutes.Start());
-
-            OnlineResearch onlineResearchQuarterHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.QuarterHour, 400, decisions);
-            Task QuarterHour = new Task(async () => await onlineResearchQuarterHour.Start());
-
-            OnlineResearch onlineResearchHalfHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.HalfHour, 400, decisions);
-            Task HalfHour = new Task(async () => await onlineResearchHalfHour.Start());
-
-            OnlineResearch onlineResearchHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Hour, 400, decisions);
-            Task Hour = new Task(async () => await onlineResearchHour.Start());
-
-            OnlineResearch onlineResearchDay = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Day, 400, decisions);
-            Task Day = new Task(async () => await onlineResearchDay.Start());
+        //    OnlineResearch onlineResearchFiveMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.FiveMinutes, 400, decisions);
+        //    Task FiveMinutes = new Task(async () => await onlineResearchFiveMinutes.Start());
 
 
+        //    OnlineResearch onlineResearchTenMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TenMinutes, 400, decisions);
+        //    Task TenMinutes = new Task(async () => await onlineResearchTenMinutes.Start());
 
-            GetOrder.Start();
-            Thread.Sleep(100);
-            Minute.Start();
-            TwoMinutes.Start();
-            ThreeMinutes.Start();
-            FiveMinutes.Start();
-            //TenMinutes.Start();
-            //QuarterHour.Start();
-            //HalfHour.Start();
-            //Hour.Start();
-            //Day.Start();
-            //GetOrder.Join();
-            //FiveMinutes.Join();
+        //    OnlineResearch onlineResearchQuarterHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.QuarterHour, 400, decisions);
+        //    Task QuarterHour = new Task(async () => await onlineResearchQuarterHour.Start());
 
-            //Task.WaitAny(GetOrder, FiveMinutes);
-            while (true) { };
+        //    OnlineResearch onlineResearchHalfHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.HalfHour, 400, decisions);
+        //    Task HalfHour = new Task(async () => await onlineResearchHalfHour.Start());
 
-            //Log.Information("Stop program");
-            #endregion
+        //    OnlineResearch onlineResearchHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Hour, 400, decisions);
+        //    Task Hour = new Task(async () => await onlineResearchHour.Start());
+
+        //    OnlineResearch onlineResearchDay = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Day, 400, decisions);
+        //    Task Day = new Task(async () => await onlineResearchDay.Start());
+
+
+
+        //    GetOrder.Start();
+        //    Thread.Sleep(100);
+        //    Minute.Start();
+        //    TwoMinutes.Start();
+        //    ThreeMinutes.Start();
+        //    FiveMinutes.Start();
+        //    //TenMinutes.Start();
+        //    //QuarterHour.Start();
+        //    //HalfHour.Start();
+        //    //Hour.Start();
+        //    //Day.Start();
+        //    //GetOrder.Join();
+        //    //FiveMinutes.Join();
+
+        //    //Task.WaitAny(GetOrder, FiveMinutes);
+        //    while (true) { };
+
+        //    //Log.Information("Stop program");
+        //    #endregion
         }
     }
 }
