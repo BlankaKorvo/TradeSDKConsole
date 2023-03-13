@@ -22,6 +22,7 @@ using Google.Protobuf.Collections;
 using DataCollector.TinkoffAdapterGrpc;
 using Microsoft.Extensions.DependencyInjection;
 using Tinkoff.InvestApi.V1;
+using Google.Protobuf;
 //using TinkoffLegacy.InvestApi.V1;
 
 namespace tradeSDK
@@ -57,19 +58,41 @@ namespace tradeSDK
             //InstrumentRequest InstrumentRequest = new InstrumentRequest() {IdType = InstrumentIdType.Ticker, ClassCode = "", Id = "YNDX" };
             //var instrument = client.Instruments.GetInstrumentBy(InstrumentRequest);
             //Console.WriteLine(instrument.Instrument.Uid);
-            GetCandlesRequest getCandlesRequest = new GetCandlesRequest() {InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c", /*From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-10)),*/ Interval = Tinkoff.InvestApi.V1.CandleInterval._1Min, To = Timestamp.FromDateTime(DateTime.UtcNow)};
+            //GetCandlesRequest getCandlesRequest = new GetCandlesRequest() {InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c", /*From = Timestamp.FromDateTime(DateTime.UtcNow.AddDays(-10)),*/ Interval = Tinkoff.InvestApi.V1.CandleInterval._1Min, To = Timestamp.FromDateTime(DateTime.UtcNow)};
             //GetCandlesResponse result = client.MarketData.GetCandles(getCandlesRequest);
             //List<HistoricCandle> candles = result.Candles.ToList();
-            GetTinkoffCandles getTinkoffCandles = new GetTinkoffCandles() {Client = client, FullCandlesRequest = getCandlesRequest, CandleCount = 1000000000 };
-            var candles = getTinkoffCandles.GetSetCandles();
+            //GetTinkoffCandles getTinkoffCandles = new GetTinkoffCandles() {Client = client, CandlesRequest = getCandlesRequest, CandleCount = 1000000000 };
+            //var candles = getTinkoffCandles.GetSetCandles();
+            var candles = GetMarketData.GetCandles("10e17a87-3bce-4a1f-9dfc-720396f98a3c", MarketDataModules.Candles.CandleInterval.FiveMinutes, 100);
             
-            foreach ( var candle in candles)
+            foreach ( var candle in candles.Candles)
             {
                 Console.WriteLine(candle.IsComplete);
                 Console.WriteLine(candle.Close);
                 Console.WriteLine(candle.Time);
             }
-            Console.WriteLine(candles.Count);
+            Console.WriteLine(candles.Candles.Count);
+
+
+            var thisOrderBook = GetMarketData.GetOrderbook("10e17a87-3bce-4a1f-9dfc-720396f98a3c", 50);
+
+            Console.WriteLine(thisOrderBook.ClosePrice);
+
+            Console.WriteLine($"Last price: {thisOrderBook.LastPrice} {thisOrderBook.LastPrice} {thisOrderBook.LastPriceTime}");
+            Console.WriteLine($"Close price: {thisOrderBook.ClosePrice} {thisOrderBook.ClosePrice} {thisOrderBook.ClosePriceTime}");
+            Console.WriteLine($"Orderbook time: {thisOrderBook.OrderbookTime}");
+            Console.WriteLine($"Last ask: {thisOrderBook.Asks.LastOrDefault().Price} {thisOrderBook.Asks.LastOrDefault().Price} {thisOrderBook.Asks.LastOrDefault().Quantity}");
+            Console.WriteLine($"First ask: {thisOrderBook.Asks.FirstOrDefault().Price} {thisOrderBook.Asks.FirstOrDefault().Price} {thisOrderBook.Asks.FirstOrDefault().Quantity}");
+            Console.WriteLine($"Last bid: {thisOrderBook.Bids.LastOrDefault().Price} {thisOrderBook.Bids.LastOrDefault().Price} {thisOrderBook.Bids.LastOrDefault().Quantity}");
+            Console.WriteLine($"First bid: {thisOrderBook.Bids.FirstOrDefault().Price} {thisOrderBook.Bids.FirstOrDefault().Price} {thisOrderBook.Bids.FirstOrDefault().Quantity}");
+            Console.WriteLine($"Depth ask: {thisOrderBook.Asks.Count}");
+            Console.WriteLine($"Depth bid: {thisOrderBook.Bids.Count}");
+            foreach (var item in thisOrderBook.Asks)
+            {
+                Console.WriteLine(item.Price);
+            }
+
+
             Console.ReadKey();
             
             
