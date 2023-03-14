@@ -69,6 +69,7 @@ namespace tradeSDK
             {
                 Console.WriteLine(candle.IsComplete);
                 Console.WriteLine(candle.Close);
+                Console.WriteLine(candle.Volume);
                 Console.WriteLine(candle.Time);
             }
             Console.WriteLine(candles.Candles.Count);
