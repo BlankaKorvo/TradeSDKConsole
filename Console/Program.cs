@@ -53,7 +53,15 @@ namespace tradeSDK
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
             var instruments = client.Instruments.Shares();
+            Console.WriteLine(instruments.Instruments.Count());
+            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").OrderBy(x => x.Ticker);
+            Console.WriteLine(russianInstruments.Count());
+
             var instr = instruments.Instruments.First(x => x.Ticker == "YNDX");
+            foreach (var x in russianInstruments)
+            {
+                Console.WriteLine(x.Ticker);
+            }
             Console.WriteLine($"{instr.ClassCode} {instr.Uid}");
             //InstrumentRequest InstrumentRequest = new InstrumentRequest() {IdType = InstrumentIdType.Ticker, ClassCode = "", Id = "YNDX" };
             //var instrument = client.Instruments.GetInstrumentBy(InstrumentRequest);
@@ -63,35 +71,38 @@ namespace tradeSDK
             //List<HistoricCandle> candles = result.Candles.ToList();
             //GetTinkoffCandles getTinkoffCandles = new GetTinkoffCandles() {Client = client, CandlesRequest = getCandlesRequest, CandleCount = 1000000000 };
             //var candles = getTinkoffCandles.GetSetCandles();
-            var candles = GetMarketData.GetCandles("10e17a87-3bce-4a1f-9dfc-720396f98a3c", MarketDataModules.Candles.CandleInterval.FiveMinutes, 100);
+
+
+
+            //var candles = GetMarketData.GetCandles("10e17a87-3bce-4a1f-9dfc-720396f98a3c", MarketDataModules.Candles.CandleInterval.FiveMinutes, 100);
             
-            foreach ( var candle in candles.Candles)
-            {
-                Console.WriteLine(candle.IsComplete);
-                Console.WriteLine(candle.Close);
-                Console.WriteLine(candle.Volume);
-                Console.WriteLine(candle.Time);
-            }
-            Console.WriteLine(candles.Candles.Count);
+            //foreach ( var candle in candles.Candles)
+            //{
+            //    Console.WriteLine(candle.IsComplete);
+            //    Console.WriteLine(candle.Close);
+            //    Console.WriteLine(candle.Volume);
+            //    Console.WriteLine(candle.Time);
+            //}
+            //Console.WriteLine(candles.Candles.Count);
 
 
-            var thisOrderBook = GetMarketData.GetOrderbook("10e17a87-3bce-4a1f-9dfc-720396f98a3c", 50);
+            //var thisOrderBook = GetMarketData.GetOrderbook("10e17a87-3bce-4a1f-9dfc-720396f98a3c", 50);
 
-            Console.WriteLine(thisOrderBook.ClosePrice);
+            //Console.WriteLine(thisOrderBook.ClosePrice);
 
-            Console.WriteLine($"Last price: {thisOrderBook.LastPrice} {thisOrderBook.LastPrice} {thisOrderBook.LastPriceTime}");
-            Console.WriteLine($"Close price: {thisOrderBook.ClosePrice} {thisOrderBook.ClosePrice} {thisOrderBook.ClosePriceTime}");
-            Console.WriteLine($"Orderbook time: {thisOrderBook.OrderbookTime}");
-            Console.WriteLine($"Last ask: {thisOrderBook.Asks?.LastOrDefault()?.Price} {thisOrderBook.Asks?.LastOrDefault()?.Price} {thisOrderBook.Asks?.LastOrDefault()?.Quantity}");
-            Console.WriteLine($"First ask: {thisOrderBook.Asks?.FirstOrDefault()?.Price} {thisOrderBook.Asks?.FirstOrDefault()?.Price} {thisOrderBook.Asks?.FirstOrDefault()?.Quantity}");
-            Console.WriteLine($"Last bid: {thisOrderBook.Bids?.LastOrDefault()?.Price} {thisOrderBook.Bids?.LastOrDefault()?.Price} {thisOrderBook.Bids?.LastOrDefault()?.Quantity}");
-            Console.WriteLine($"First bid: {thisOrderBook.Bids?.FirstOrDefault()?.Price} {thisOrderBook.Bids?.FirstOrDefault()?.Price} {thisOrderBook.Bids?.FirstOrDefault()?.Quantity}");
-            Console.WriteLine($"Depth ask: {thisOrderBook.Asks?.Count}");
-            Console.WriteLine($"Depth bid: {thisOrderBook.Bids?.Count}");
-            foreach (var item in thisOrderBook.Asks)
-            {
-                Console.WriteLine(item.Price);
-            }
+            //Console.WriteLine($"Last price: {thisOrderBook.LastPrice} {thisOrderBook.LastPrice} {thisOrderBook.LastPriceTime}");
+            //Console.WriteLine($"Close price: {thisOrderBook.ClosePrice} {thisOrderBook.ClosePrice} {thisOrderBook.ClosePriceTime}");
+            //Console.WriteLine($"Orderbook time: {thisOrderBook.OrderbookTime}");
+            //Console.WriteLine($"Last ask: {thisOrderBook.Asks?.LastOrDefault()?.Price} {thisOrderBook.Asks?.LastOrDefault()?.Price} {thisOrderBook.Asks?.LastOrDefault()?.Quantity}");
+            //Console.WriteLine($"First ask: {thisOrderBook.Asks?.FirstOrDefault()?.Price} {thisOrderBook.Asks?.FirstOrDefault()?.Price} {thisOrderBook.Asks?.FirstOrDefault()?.Quantity}");
+            //Console.WriteLine($"Last bid: {thisOrderBook.Bids?.LastOrDefault()?.Price} {thisOrderBook.Bids?.LastOrDefault()?.Price} {thisOrderBook.Bids?.LastOrDefault()?.Quantity}");
+            //Console.WriteLine($"First bid: {thisOrderBook.Bids?.FirstOrDefault()?.Price} {thisOrderBook.Bids?.FirstOrDefault()?.Price} {thisOrderBook.Bids?.FirstOrDefault()?.Quantity}");
+            //Console.WriteLine($"Depth ask: {thisOrderBook.Asks?.Count}");
+            //Console.WriteLine($"Depth bid: {thisOrderBook.Bids?.Count}");
+            //foreach (var item in thisOrderBook.Asks)
+            //{
+            //    Console.WriteLine(item.Price);
+            //}
 
 
             Console.ReadKey();
