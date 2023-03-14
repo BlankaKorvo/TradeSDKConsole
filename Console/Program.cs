@@ -81,12 +81,12 @@ namespace tradeSDK
             Console.WriteLine($"Last price: {thisOrderBook.LastPrice} {thisOrderBook.LastPrice} {thisOrderBook.LastPriceTime}");
             Console.WriteLine($"Close price: {thisOrderBook.ClosePrice} {thisOrderBook.ClosePrice} {thisOrderBook.ClosePriceTime}");
             Console.WriteLine($"Orderbook time: {thisOrderBook.OrderbookTime}");
-            Console.WriteLine($"Last ask: {thisOrderBook.Asks.LastOrDefault().Price} {thisOrderBook.Asks.LastOrDefault().Price} {thisOrderBook.Asks.LastOrDefault().Quantity}");
-            Console.WriteLine($"First ask: {thisOrderBook.Asks.FirstOrDefault().Price} {thisOrderBook.Asks.FirstOrDefault().Price} {thisOrderBook.Asks.FirstOrDefault().Quantity}");
-            Console.WriteLine($"Last bid: {thisOrderBook.Bids.LastOrDefault().Price} {thisOrderBook.Bids.LastOrDefault().Price} {thisOrderBook.Bids.LastOrDefault().Quantity}");
-            Console.WriteLine($"First bid: {thisOrderBook.Bids.FirstOrDefault().Price} {thisOrderBook.Bids.FirstOrDefault().Price} {thisOrderBook.Bids.FirstOrDefault().Quantity}");
-            Console.WriteLine($"Depth ask: {thisOrderBook.Asks.Count}");
-            Console.WriteLine($"Depth bid: {thisOrderBook.Bids.Count}");
+            Console.WriteLine($"Last ask: {thisOrderBook.Asks?.LastOrDefault()?.Price} {thisOrderBook.Asks?.LastOrDefault()?.Price} {thisOrderBook.Asks?.LastOrDefault()?.Quantity}");
+            Console.WriteLine($"First ask: {thisOrderBook.Asks?.FirstOrDefault()?.Price} {thisOrderBook.Asks?.FirstOrDefault()?.Price} {thisOrderBook.Asks?.FirstOrDefault()?.Quantity}");
+            Console.WriteLine($"Last bid: {thisOrderBook.Bids?.LastOrDefault()?.Price} {thisOrderBook.Bids?.LastOrDefault()?.Price} {thisOrderBook.Bids?.LastOrDefault()?.Quantity}");
+            Console.WriteLine($"First bid: {thisOrderBook.Bids?.FirstOrDefault()?.Price} {thisOrderBook.Bids?.FirstOrDefault()?.Price} {thisOrderBook.Bids?.FirstOrDefault()?.Quantity}");
+            Console.WriteLine($"Depth ask: {thisOrderBook.Asks?.Count}");
+            Console.WriteLine($"Depth bid: {thisOrderBook.Bids?.Count}");
             foreach (var item in thisOrderBook.Asks)
             {
                 Console.WriteLine(item.Price);
