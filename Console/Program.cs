@@ -23,6 +23,8 @@ using DataCollector.TinkoffAdapterGrpc;
 using Microsoft.Extensions.DependencyInjection;
 using Tinkoff.InvestApi.V1;
 using Google.Protobuf;
+using Analysis;
+using Skender.Stock.Indicators;
 //using TinkoffLegacy.InvestApi.V1;
 
 namespace tradeSDK
@@ -35,8 +37,8 @@ namespace tradeSDK
             Log.Logger = new LoggerConfiguration()
                 .Enrich.WithThreadId()
                 .Enrich.WithThreadName()
-                .MinimumLevel.Debug()
-                .WriteTo.Console(outputTemplate: logTemplate)
+                .MinimumLevel.Information()
+                //.WriteTo.Console(outputTemplate: logTemplate)
                 .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs//.log"),
                               rollingInterval: RollingInterval.Month,
                               fileSizeLimitBytes: 304857600,
@@ -52,17 +54,77 @@ namespace tradeSDK
 
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
+            //var candles = GetMarketData.GetCandles("10e17a87-3bce-4a1f-9dfc-720396f98a3c", MarketDataModules.Candles.CandleInterval.Minute, 200);
+            //var thisOrderBook = GetMarketData.GetOrderbook("10e17a87-3bce-4a1f-9dfc-720396f98a3c", 1);
+            //List<BollingerBandsResult> BbResultFirst = MapperCandlesToQuote.ConvertThisCandlesToQuote(candles.Candles, thisOrderBook.LastPrice).GetBollingerBands(20).ToList();
+
+            //Console.WriteLine(BbResultFirst.LastOrDefault().PercentB);
+            //Console.WriteLine(BbResultFirst.LastOrDefault().Date);
+
+
+
+            InstrumentRequest instrumentRequest = new InstrumentRequest() { Id = "659e9f81-96b7-458c-9d80-54cd2b596b8e", IdType = InstrumentIdType.Uid };
+            var ins = client.Instruments.GetInstrumentBy(instrumentRequest);
+            Console.WriteLine(ins.Instrument.Name);
+            Console.WriteLine(ins.Instrument.Ticker);
+
+            instrumentRequest = new InstrumentRequest() { Id = "10e17a87-3bce-4a1f-9dfc-720396f98a3c", IdType = InstrumentIdType.Uid };
+            ins = client.Instruments.GetInstrumentBy(instrumentRequest);
+            Console.WriteLine(ins.Instrument.Name);
+            Console.WriteLine(ins.Instrument.Ticker);
+
             var instruments = client.Instruments.Shares();
             Console.WriteLine(instruments.Instruments.Count());
-            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").OrderBy(x => x.Ticker);
+            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).OrderBy(x => x.Ticker);
             Console.WriteLine(russianInstruments.Count());
 
-            var instr = instruments.Instruments.First(x => x.Ticker == "YNDX");
-            foreach (var x in russianInstruments)
+            
+            Console.WriteLine(DateTime.Now.ToString());
+            while (true)
             {
-                Console.WriteLine(x.Ticker);
+                foreach (var item in russianInstruments)
+                {
+                    BBV bBVMin = new BBV() { };
+
+                    BBV bBVFiv = new BBV() { };
+
+
+                    var candlesOne = GetMarketData.GetCandles(item.Uid, MarketDataModules.Candles.CandleInterval.Minute, 200);
+
+                    if (candlesOne.Candles.LastOrDefault().Volume < 1000) { continue; }
+
+                    var candlesFive = GetMarketData.GetCandles(item.Uid, MarketDataModules.Candles.CandleInterval.FiveMinutes, 200);
+                    var orderbook = GetMarketData.GetOrderbook(item.Uid, 1);
+
+                    if (orderbook == null || candlesOne == null || candlesFive == null) { continue; }
+
+
+                    bBVMin.TradeResult(candlesOne, orderbook, new OperationResult());
+                    var oneResult = bBVMin.Target;
+                    if (oneResult == TradeTarget.toLong)
+                    {
+                        Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 1Min = {oneResult} {DateTime.Now.ToString()}");
+                    }
+
+
+
+                    bBVFiv.TradeResult(candlesFive, orderbook, new OperationResult());
+                    oneResult = bBVFiv.Target;
+                    if (oneResult == TradeTarget.toLong)
+                    {
+                        Console.WriteLine($"Result: {bBVFiv.PVORes}, {bBVFiv.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 5Min = {oneResult} {DateTime.Now.ToString()}");
+                    }
+                }
+                Console.WriteLine(DateTime.Now.ToString());
             }
-            Console.WriteLine($"{instr.ClassCode} {instr.Uid}");
+
+
+            //var instr = instruments.Instruments.First(x => x.Ticker == "YNDX");
+            //foreach (var x in russianInstruments)
+            //{
+            //    Console.WriteLine(x.Ticker);
+            //}
+            //Console.WriteLine($"{instr.ClassCode} {instr.Uid}");
             //InstrumentRequest InstrumentRequest = new InstrumentRequest() {IdType = InstrumentIdType.Ticker, ClassCode = "", Id = "YNDX" };
             //var instrument = client.Instruments.GetInstrumentBy(InstrumentRequest);
             //Console.WriteLine(instrument.Instrument.Uid);
