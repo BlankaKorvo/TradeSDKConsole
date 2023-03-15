@@ -25,6 +25,8 @@ using Tinkoff.InvestApi.V1;
 using Google.Protobuf;
 using Analysis;
 using Skender.Stock.Indicators;
+using Grpc.Core;
+using System.Text.Json;
 //using TinkoffLegacy.InvestApi.V1;
 
 namespace tradeSDK
@@ -54,6 +56,38 @@ namespace tradeSDK
 
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
+
+            var stream = client.MarketDataStream.MarketDataStream();
+            // Отправляем запрос в стрим
+            await stream.RequestStream.WriteAsync(new MarketDataRequest
+            {
+                SubscribeCandlesRequest = new SubscribeCandlesRequest
+                {
+                    Instruments =
+                {
+                    new CandleInstrument
+                    {
+                        InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c",
+                        Interval = SubscriptionInterval.OneMinute
+                    },
+                    new CandleInstrument
+                    {
+                        InstrumentId = "962e2a95-02a9-4171-abd7-aa198dbe643a",
+                        Interval = SubscriptionInterval.OneMinute
+                    }
+
+                },
+                    SubscriptionAction = SubscriptionAction.Subscribe
+                }
+            });
+            // Обрабатываем все приходящие из стрима ответы
+            await foreach (var response in stream.ResponseStream.ReadAllAsync())
+            {
+                Console.WriteLine(JsonSerializer.Serialize(response.Candle));
+            }
+
+            Console.ReadKey();
+
             //var candles = GetMarketData.GetCandles("10e17a87-3bce-4a1f-9dfc-720396f98a3c", MarketDataModules.Candles.CandleInterval.Minute, 200);
             //var thisOrderBook = GetMarketData.GetOrderbook("10e17a87-3bce-4a1f-9dfc-720396f98a3c", 1);
             //List<BollingerBandsResult> BbResultFirst = MapperCandlesToQuote.ConvertThisCandlesToQuote(candles.Candles, thisOrderBook.LastPrice).GetBollingerBands(20).ToList();
@@ -78,7 +112,7 @@ namespace tradeSDK
             var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).OrderBy(x => x.Ticker);
             Console.WriteLine(russianInstruments.Count());
 
-            
+
             Console.WriteLine(DateTime.Now.ToString());
             while (true)
             {
@@ -103,7 +137,7 @@ namespace tradeSDK
                     var oneResult = bBVMin.Target;
                     if (oneResult == TradeTarget.toLong)
                     {
-                        Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 1Min = {oneResult} {DateTime.Now.ToString()}");
+                        Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 1Min = {oneResult} {DateTime.Now.ToString()} {item.Uid}");
                     }
 
 
@@ -112,7 +146,7 @@ namespace tradeSDK
                     oneResult = bBVFiv.Target;
                     if (oneResult == TradeTarget.toLong)
                     {
-                        Console.WriteLine($"Result: {bBVFiv.PVORes}, {bBVFiv.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 5Min = {oneResult} {DateTime.Now.ToString()}");
+                        Console.WriteLine($"Result: {bBVFiv.PVORes}, {bBVFiv.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 5Min = {oneResult} {DateTime.Now.ToString()} {item.Uid}");
                     }
                 }
                 Console.WriteLine(DateTime.Now.ToString());
@@ -137,7 +171,7 @@ namespace tradeSDK
 
 
             //var candles = GetMarketData.GetCandles("10e17a87-3bce-4a1f-9dfc-720396f98a3c", MarketDataModules.Candles.CandleInterval.FiveMinutes, 100);
-            
+
             //foreach ( var candle in candles.Candles)
             //{
             //    Console.WriteLine(candle.IsComplete);
@@ -168,15 +202,15 @@ namespace tradeSDK
 
 
             Console.ReadKey();
-            
-            
-            
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
+
+
+
             //string tickerr = "TCSG";
             //var instrumentt = await GetMarketData.GetInstrumentByTickerAsync(tickerr);
             //string figi = instrumentt.Figi;
@@ -223,7 +257,7 @@ namespace tradeSDK
             //List<Position> portfolioPositions = new List<Position>();
             //PortfolioEmulator portfolioEmulator = new PortfolioEmulator();
             DbEdit.DeleteDb();
-            
+
             PortfolioDbEdit.Add(MarketDataModules.Candles.CandleInterval.FiveMinutes);
             if (!PositionDbEdit.IsAvailable("figi", MarketDataModules.Candles.CandleInterval.FiveMinutes))
             {
@@ -233,106 +267,106 @@ namespace tradeSDK
             }
             if (!PositionDbEdit.IsAvailable("figi1", MarketDataModules.Candles.CandleInterval.Minute))
             {
-                PositionDbEdit.Add("figi1", MarketDataModules.Candles.CandleInterval.Minute,  "ticker", 0.12m, 1);
+                PositionDbEdit.Add("figi1", MarketDataModules.Candles.CandleInterval.Minute, "ticker", 0.12m, 1);
             }
             TransactionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.FiveMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
             //TransactionDbEdit.Add("figi", MarketDataModules.Candles.CandleInterval.TenMinutes, TradeTarget.toLong, 0.25m, 52m, DateTime.Now);
 
-                //if (portfolioEmulator.IsPositionAvailable("figi1", CandleInterval.FiveMinutes))
-                //{
-                //    portfolioEmulator.RemovePosition("figi1", CandleInterval.FiveMinutes);
-                //}
-                //if (portfolioEmulator.IsPositionAvailable("figi", CandleInterval.FiveMinutes))
-                //{
-                //    portfolioEmulator.RemovePosition("figi", CandleInterval.FiveMinutes);
-                //}
-                //if (portfolioEmulator.IsPositionAvailable("figi2", CandleInterval.FiveMinutes))
-                //{
-                //    portfolioEmulator.RemovePosition("figi2", CandleInterval.FiveMinutes);
-                //}
+            //if (portfolioEmulator.IsPositionAvailable("figi1", CandleInterval.FiveMinutes))
+            //{
+            //    portfolioEmulator.RemovePosition("figi1", CandleInterval.FiveMinutes);
+            //}
+            //if (portfolioEmulator.IsPositionAvailable("figi", CandleInterval.FiveMinutes))
+            //{
+            //    portfolioEmulator.RemovePosition("figi", CandleInterval.FiveMinutes);
+            //}
+            //if (portfolioEmulator.IsPositionAvailable("figi2", CandleInterval.FiveMinutes))
+            //{
+            //    portfolioEmulator.RemovePosition("figi2", CandleInterval.FiveMinutes);
+            //}
 
             Console.ReadKey();
 
 
-        //    #region Trade
-        //    //int x = 1;
-        //    string ticker = "TCSG";
-        //    //var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
-        //    //CandlesList candlesList = await GetMarketData.GetCandles(instrument.Figi, CandleInterval.Day, 1000);
-        //    //using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"), true, System.Text.Encoding.Default))
-        //    //{
-        //    //    foreach (var candle in candlesList.Candles)
-        //    //    {
-        //    //            sw.WriteLine($"{x++};{candle.Close}");                
-        //    //    }
-        //    //}
+            //    #region Trade
+            //    //int x = 1;
+            //    string ticker = "TCSG";
+            //    //var instrument = await GetMarketData.GetInstrumentByTickerAsync(ticker);
+            //    //CandlesList candlesList = await GetMarketData.GetCandles(instrument.Figi, CandleInterval.Day, 1000);
+            //    //using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"), true, System.Text.Encoding.Default))
+            //    //{
+            //    //    foreach (var candle in candlesList.Candles)
+            //    //    {
+            //    //            sw.WriteLine($"{x++};{candle.Close}");                
+            //    //    }
+            //    //}
 
-        //    //Decision decision1 = TradeDecisions.Method1;
-        //    List<Decision> decisions = new List<Decision>
-        //    {
+            //    //Decision decision1 = TradeDecisions.Method1;
+            //    List<Decision> decisions = new List<Decision>
+            //    {
 
-        //    };
+            //    };
 
-        //    var x = typeof(TradeDecisions).GetMethods();
-        //    foreach (var item in x.Where(x => x.IsStatic))
-        //    {
-        //        if (item.DeclaringType == typeof(TradeDecisions))
-        //        {
-        //            decisions.Add(item.CreateDelegate<Decision>());
-        //        }
-        //    }
-        //    Task GetOrder = new Task(async () => await LockOrderbook.GetOrderbook(instrument.Figi));
-        //    //GetOrder.Priority = ThreadPriority.Highest;
+            //    var x = typeof(TradeDecisions).GetMethods();
+            //    foreach (var item in x.Where(x => x.IsStatic))
+            //    {
+            //        if (item.DeclaringType == typeof(TradeDecisions))
+            //        {
+            //            decisions.Add(item.CreateDelegate<Decision>());
+            //        }
+            //    }
+            //    Task GetOrder = new Task(async () => await LockOrderbook.GetOrderbook(instrument.Figi));
+            //    //GetOrder.Priority = ThreadPriority.Highest;
 
-        //    OnlineResearch onlineResearchMinute = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Minute, 400, decisions);
-        //    Task Minute = new Task(async () => await onlineResearchMinute.Start());
+            //    OnlineResearch onlineResearchMinute = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Minute, 400, decisions);
+            //    Task Minute = new Task(async () => await onlineResearchMinute.Start());
 
-        //    OnlineResearch onlineResearchTwoMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TwoMinutes, 400, decisions);
-        //    Task TwoMinutes = new Task(async () => await onlineResearchTwoMinutes.Start());
+            //    OnlineResearch onlineResearchTwoMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TwoMinutes, 400, decisions);
+            //    Task TwoMinutes = new Task(async () => await onlineResearchTwoMinutes.Start());
 
-        //    OnlineResearch onlineResearchThreeMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.ThreeMinutes, 400, decisions);
-        //    Task ThreeMinutes = new Task(async () => await onlineResearchThreeMinutes.Start());
+            //    OnlineResearch onlineResearchThreeMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.ThreeMinutes, 400, decisions);
+            //    Task ThreeMinutes = new Task(async () => await onlineResearchThreeMinutes.Start());
 
-        //    OnlineResearch onlineResearchFiveMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.FiveMinutes, 400, decisions);
-        //    Task FiveMinutes = new Task(async () => await onlineResearchFiveMinutes.Start());
-
-
-        //    OnlineResearch onlineResearchTenMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TenMinutes, 400, decisions);
-        //    Task TenMinutes = new Task(async () => await onlineResearchTenMinutes.Start());
-
-        //    OnlineResearch onlineResearchQuarterHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.QuarterHour, 400, decisions);
-        //    Task QuarterHour = new Task(async () => await onlineResearchQuarterHour.Start());
-
-        //    OnlineResearch onlineResearchHalfHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.HalfHour, 400, decisions);
-        //    Task HalfHour = new Task(async () => await onlineResearchHalfHour.Start());
-
-        //    OnlineResearch onlineResearchHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Hour, 400, decisions);
-        //    Task Hour = new Task(async () => await onlineResearchHour.Start());
-
-        //    OnlineResearch onlineResearchDay = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Day, 400, decisions);
-        //    Task Day = new Task(async () => await onlineResearchDay.Start());
+            //    OnlineResearch onlineResearchFiveMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.FiveMinutes, 400, decisions);
+            //    Task FiveMinutes = new Task(async () => await onlineResearchFiveMinutes.Start());
 
 
+            //    OnlineResearch onlineResearchTenMinutes = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.TenMinutes, 400, decisions);
+            //    Task TenMinutes = new Task(async () => await onlineResearchTenMinutes.Start());
 
-        //    GetOrder.Start();
-        //    Thread.Sleep(100);
-        //    Minute.Start();
-        //    TwoMinutes.Start();
-        //    ThreeMinutes.Start();
-        //    FiveMinutes.Start();
-        //    //TenMinutes.Start();
-        //    //QuarterHour.Start();
-        //    //HalfHour.Start();
-        //    //Hour.Start();
-        //    //Day.Start();
-        //    //GetOrder.Join();
-        //    //FiveMinutes.Join();
+            //    OnlineResearch onlineResearchQuarterHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.QuarterHour, 400, decisions);
+            //    Task QuarterHour = new Task(async () => await onlineResearchQuarterHour.Start());
 
-        //    //Task.WaitAny(GetOrder, FiveMinutes);
-        //    while (true) { };
+            //    OnlineResearch onlineResearchHalfHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.HalfHour, 400, decisions);
+            //    Task HalfHour = new Task(async () => await onlineResearchHalfHour.Start());
 
-        //    //Log.Information("Stop program");
-        //    #endregion
+            //    OnlineResearch onlineResearchHour = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Hour, 400, decisions);
+            //    Task Hour = new Task(async () => await onlineResearchHour.Start());
+
+            //    OnlineResearch onlineResearchDay = new(instrument.Figi, MarketDataModules.Candles.CandleInterval.Day, 400, decisions);
+            //    Task Day = new Task(async () => await onlineResearchDay.Start());
+
+
+
+            //    GetOrder.Start();
+            //    Thread.Sleep(100);
+            //    Minute.Start();
+            //    TwoMinutes.Start();
+            //    ThreeMinutes.Start();
+            //    FiveMinutes.Start();
+            //    //TenMinutes.Start();
+            //    //QuarterHour.Start();
+            //    //HalfHour.Start();
+            //    //Hour.Start();
+            //    //Day.Start();
+            //    //GetOrder.Join();
+            //    //FiveMinutes.Join();
+
+            //    //Task.WaitAny(GetOrder, FiveMinutes);
+            //    while (true) { };
+
+            //    //Log.Information("Stop program");
+            //    #endregion
         }
     }
 }
