@@ -52,8 +52,7 @@ namespace tradeSDK
 
             Log.Information("Start program");
 
-
-
+            CandleList candleList = new CandleList(default, default, new List<CandleStructure>() { new CandleStructure(default, default, default, default, default, default, default) } );
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
 
@@ -64,26 +63,66 @@ namespace tradeSDK
                 SubscribeCandlesRequest = new SubscribeCandlesRequest
                 {
                     Instruments =
-                {
-                    new CandleInstrument
                     {
-                        InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c",
-                        Interval = SubscriptionInterval.OneMinute
-                    },
-                    new CandleInstrument
-                    {
-                        InstrumentId = "962e2a95-02a9-4171-abd7-aa198dbe643a",
-                        Interval = SubscriptionInterval.OneMinute
-                    }
-
-                },
+                        new CandleInstrument
+                        {
+                            InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c",
+                            Interval = SubscriptionInterval.OneMinute
+                        }
+                    },                    
                     SubscriptionAction = SubscriptionAction.Subscribe
-                }
+                }//,
+                //SubscribeOrderBookRequest = new SubscribeOrderBookRequest
+                //{
+                //    Instruments =
+                //    {
+                //        new OrderBookInstrument
+                //        {
+                //            InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c",
+                //            Depth = 1,
+                //        }
+                //    },
+                //SubscriptionAction = SubscriptionAction.Subscribe
+            //}
             });
             // Обрабатываем все приходящие из стрима ответы
             await foreach (var response in stream.ResponseStream.ReadAllAsync())
             {
-                Console.WriteLine(JsonSerializer.Serialize(response.Candle));
+                if (response.Candle == null)
+                {
+                    Console.WriteLine("cont");
+                    continue;
+                }
+                lock (candleList)
+                {
+                    CandleStructure candleStructure = new CandleStructure(response?.Candle?.Open, response?.Candle?.Close, response?.Candle?.High, response?.Candle?.Low, response.Candle.Volume, response.Candle.Time.ToDateTime(), false);
+                    if (candleList == null || response.Candle.Time.ToDateTime() > candleList?.Candles?.LastOrDefault().Time)
+                    {
+                        Console.WriteLine("First if");
+                        candleList = GetMarketData.GetCandles(response.Candle.InstrumentUid, MarketDataModules.Candles.CandleInterval.Minute, 200);
+                        if (response.Candle.Time.ToDateTime() != candleList.Candles.LastOrDefault().Time)
+                        {
+                            Console.WriteLine("Second if");
+                            candleList.Candles.Add(candleStructure);
+                        }
+                    }
+                    else if (response.Candle.Time.ToDateTime() == candleList?.Candles?.LastOrDefault().Time)
+                    {
+                        candleList.Candles.RemoveAt(candleList.Candles.Count - 1);
+                        candleList.Candles.Add(candleStructure);
+                    }
+
+
+
+                    Console.WriteLine(candleList?.Candles?[^3].Time.ToString());
+                    Console.WriteLine(candleList?.Candles?[^2].Time.ToString());
+                    Console.WriteLine(candleList?.Candles?.LastOrDefault().Time.ToString());
+                    Console.WriteLine(candleList?.Candles?.LastOrDefault().Close);
+
+                }
+
+                //Console.WriteLine("Ask: " + JsonSerializer.Serialize(response?.Orderbook?.Asks?.FirstOrDefault().Price));
+                //Console.WriteLine("Bid: " + JsonSerializer.Serialize(response?.Orderbook?.Bids?.FirstOrDefault().Price));
             }
 
             Console.ReadKey();
