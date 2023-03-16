@@ -57,13 +57,24 @@ namespace tradeSDK
             InvestApiClient client = GetClient.Grpc;
 
             var stream = client.MarketDataStream.MarketDataStream();
+
+            var instruments = client.Instruments.Shares();
+            Console.WriteLine(instruments.Instruments.Count());
+            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).OrderBy(x => x.Ticker);
+            foreach (var instrument in russianInstruments)
+            { Console.WriteLine(instrument.Uid); }
             // Отправляем запрос в стрим
             await stream.RequestStream.WriteAsync(new MarketDataRequest
             {
                 SubscribeCandlesRequest = new SubscribeCandlesRequest
                 {
                     Instruments =
-                    {
+                    { 
+                        new CandleInstrument
+                        {
+                            InstrumentId = "8e2b0325-0292-4654-8a18-4f63ed3b0e09",
+                            Interval = SubscriptionInterval.OneMinute
+                        },
                         new CandleInstrument
                         {
                             InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c",
@@ -113,14 +124,13 @@ namespace tradeSDK
                     }
 
 
-
-                    Console.WriteLine(candleList?.Candles?[^3].Time.ToString());
-                    Console.WriteLine(candleList?.Candles?[^2].Time.ToString());
+                    Console.WriteLine(response.Candle.InstrumentUid);
+                    Console.WriteLine(candleList?.Candles?[^3].Time.ToString() + " " + candleList?.Candles?[^3].Close);
+                    Console.WriteLine(candleList?.Candles?[^2].Time.ToString() + " " + candleList?.Candles?[^2].Close);
                     Console.WriteLine(candleList?.Candles?.LastOrDefault().Time.ToString());
                     Console.WriteLine(candleList?.Candles?.LastOrDefault().Close);
 
                 }
-
                 //Console.WriteLine("Ask: " + JsonSerializer.Serialize(response?.Orderbook?.Asks?.FirstOrDefault().Price));
                 //Console.WriteLine("Bid: " + JsonSerializer.Serialize(response?.Orderbook?.Bids?.FirstOrDefault().Price));
             }
@@ -146,10 +156,10 @@ namespace tradeSDK
             Console.WriteLine(ins.Instrument.Name);
             Console.WriteLine(ins.Instrument.Ticker);
 
-            var instruments = client.Instruments.Shares();
-            Console.WriteLine(instruments.Instruments.Count());
-            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).OrderBy(x => x.Ticker);
-            Console.WriteLine(russianInstruments.Count());
+            //var instruments = client.Instruments.Shares();
+            //Console.WriteLine(instruments.Instruments.Count());
+            //var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).OrderBy(x => x.Ticker);
+            //Console.WriteLine(russianInstruments.Count());
 
 
             Console.WriteLine(DateTime.Now.ToString());
@@ -172,17 +182,14 @@ namespace tradeSDK
                     if (orderbook == null || candlesOne == null || candlesFive == null) { continue; }
 
 
-                    bBVMin.TradeResult(candlesOne, orderbook, new OperationResult());
-                    var oneResult = bBVMin.Target;
+                    
+                    var oneResult = bBVMin.TradeResult(candlesOne, new OperationResult());
                     if (oneResult == TradeTarget.toLong)
                     {
                         Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 1Min = {oneResult} {DateTime.Now.ToString()} {item.Uid}");
                     }
-
-
-
-                    bBVFiv.TradeResult(candlesFive, orderbook, new OperationResult());
-                    oneResult = bBVFiv.Target;
+                    
+                    oneResult = bBVFiv.TradeResult(candlesFive, new OperationResult());
                     if (oneResult == TradeTarget.toLong)
                     {
                         Console.WriteLine($"Result: {bBVFiv.PVORes}, {bBVFiv.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 5Min = {oneResult} {DateTime.Now.ToString()} {item.Uid}");
