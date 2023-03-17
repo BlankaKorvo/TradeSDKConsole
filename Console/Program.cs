@@ -60,7 +60,7 @@ namespace tradeSDK
 
             var instruments = client.Instruments.Shares();
             Console.WriteLine(instruments.Instruments.Count());
-            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).OrderBy(x => x.Ticker);
+            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).Where(x => x.ShortEnabledFlag == true).OrderBy(x => x.Ticker);
             foreach (var instrument in russianInstruments)
             { Console.WriteLine(instrument.Uid); }
             // Отправляем запрос в стрим
