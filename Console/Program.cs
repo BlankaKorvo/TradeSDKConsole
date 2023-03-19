@@ -52,58 +52,54 @@ namespace tradeSDK
 
             Log.Information("Start program");
 
-            CandleList candleList = new CandleList(default, default, new List<CandleStructure>() { new CandleStructure(default, default, default, default, default, default, default) } );
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
+            PortfolioStreamRequest request = new PortfolioStreamRequest();
 
-            var stream = client.MarketDataStream.MarketDataStream();
+            var streamMarketData = client.MarketDataStream.MarketDataStream();
+            var streamPortfolio = client.OperationsStream.PortfolioStream(request);
 
             var instruments = client.Instruments.Shares();
             Console.WriteLine(instruments.Instruments.Count());
-            var russianInstruments = instruments.Instruments.Where(x => x.Currency == "rub").Where(x => x.TradingStatus == SecurityTradingStatus.NormalTrading).Where(x => x.ShortEnabledFlag == true).OrderBy(x => x.Ticker);
+            var russianInstruments = instruments.Instruments.Where(x => x.ForQualInvestorFlag == false)/*.Where(x => x.Currency == "rub")*/.Where(x => x.ShortEnabledFlag == true).OrderBy(x => x.Ticker);
+            
+            Dictionary<string, CandleList> CandlesListDict = new Dictionary<string, CandleList>();
+            
             foreach (var instrument in russianInstruments)
-            { Console.WriteLine(instrument.Uid); }
+            { 
+                Console.WriteLine(instrument.Name);
+                CandlesListDict.Add(instrument.Uid, new CandleList(instrument.Uid, MarketDataModules.Candles.CandleInterval.Minute, default));
+            }
+            Console.WriteLine(russianInstruments.Count());
+
+
+            RepeatedField<CandleInstrument> subInstruments = new RepeatedField<CandleInstrument>();            
+            foreach (var instrument in russianInstruments)
+            {
+                CandleInstrument candleInstrument = new CandleInstrument() { InstrumentId = instrument.Uid, Interval = SubscriptionInterval.OneMinute };
+                subInstruments.Add(candleInstrument);
+            }
+
+
             // Отправляем запрос в стрим
-            await stream.RequestStream.WriteAsync(new MarketDataRequest
+            await streamMarketData.RequestStream.WriteAsync(new MarketDataRequest
             {
                 SubscribeCandlesRequest = new SubscribeCandlesRequest
                 {
-                    Instruments =
-                    { 
-                        new CandleInstrument
-                        {
-                            InstrumentId = "8e2b0325-0292-4654-8a18-4f63ed3b0e09",
-                            Interval = SubscriptionInterval.OneMinute
-                        },
-                        new CandleInstrument
-                        {
-                            InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c",
-                            Interval = SubscriptionInterval.OneMinute
-                        }
-                    },                    
+                    Instruments = { subInstruments },                  
                     SubscriptionAction = SubscriptionAction.Subscribe
-                }//,
-                //SubscribeOrderBookRequest = new SubscribeOrderBookRequest
-                //{
-                //    Instruments =
-                //    {
-                //        new OrderBookInstrument
-                //        {
-                //            InstrumentId = "10e17a87-3bce-4a1f-9dfc-720396f98a3c",
-                //            Depth = 1,
-                //        }
-                //    },
-                //SubscriptionAction = SubscriptionAction.Subscribe
-            //}
+                }
             });
+
             // Обрабатываем все приходящие из стрима ответы
-            await foreach (var response in stream.ResponseStream.ReadAllAsync())
+            await foreach (var response in streamMarketData.ResponseStream.ReadAllAsync())
             {
                 if (response.Candle == null)
                 {
                     Console.WriteLine("cont");
                     continue;
                 }
+                CandleList candleList = CandlesListDict.FirstOrDefault(x => x.Key == response.Candle.InstrumentUid).Value;
                 lock (candleList)
                 {
                     CandleStructure candleStructure = new CandleStructure(response?.Candle?.Open, response?.Candle?.Close, response?.Candle?.High, response?.Candle?.Low, response.Candle.Volume, response.Candle.Time.ToDateTime(), false);
@@ -111,7 +107,7 @@ namespace tradeSDK
                     {
                         Console.WriteLine("First if");
                         candleList = GetMarketData.GetCandles(response.Candle.InstrumentUid, MarketDataModules.Candles.CandleInterval.Minute, 200);
-                        if (response.Candle.Time.ToDateTime() != candleList.Candles.LastOrDefault().Time)
+                        if (response.Candle.Time.ToDateTime() > candleList.Candles.LastOrDefault().Time)
                         {
                             Console.WriteLine("Second if");
                             candleList.Candles.Add(candleStructure);
@@ -122,19 +118,15 @@ namespace tradeSDK
                         candleList.Candles.RemoveAt(candleList.Candles.Count - 1);
                         candleList.Candles.Add(candleStructure);
                     }
-
-
                     Console.WriteLine(response.Candle.InstrumentUid);
                     Console.WriteLine(candleList?.Candles?[^3].Time.ToString() + " " + candleList?.Candles?[^3].Close);
                     Console.WriteLine(candleList?.Candles?[^2].Time.ToString() + " " + candleList?.Candles?[^2].Close);
                     Console.WriteLine(candleList?.Candles?.LastOrDefault().Time.ToString());
                     Console.WriteLine(candleList?.Candles?.LastOrDefault().Close);
-
                 }
-                //Console.WriteLine("Ask: " + JsonSerializer.Serialize(response?.Orderbook?.Asks?.FirstOrDefault().Price));
-                //Console.WriteLine("Bid: " + JsonSerializer.Serialize(response?.Orderbook?.Bids?.FirstOrDefault().Price));
             }
 
+            Console.WriteLine("оба на");
             Console.ReadKey();
 
             //var candles = GetMarketData.GetCandles("10e17a87-3bce-4a1f-9dfc-720396f98a3c", MarketDataModules.Candles.CandleInterval.Minute, 200);
