@@ -51,6 +51,7 @@ namespace tradeSDK
                 .CreateLogger();
 
             Log.Information("Start program");
+            Console.Write(logTemplate);
 
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
@@ -63,12 +64,12 @@ namespace tradeSDK
             Console.WriteLine(instruments.Instruments.Count());
             var russianInstruments = instruments.Instruments.Where(x => x.ForQualInvestorFlag == false)/*.Where(x => x.Currency == "rub")*/.Where(x => x.ShortEnabledFlag == true).OrderBy(x => x.Ticker);
             
-            Dictionary<string, CandleList> CandlesListDict = new Dictionary<string, CandleList>();
+            Dictionary<Share, CandleList> CandlesListDict = new Dictionary<Share, CandleList>();
             
             foreach (var instrument in russianInstruments)
             { 
                 Console.WriteLine(instrument.Name);
-                CandlesListDict.Add(instrument.Uid, new CandleList(instrument.Uid, MarketDataModules.Candles.CandleInterval.Minute, default));
+                CandlesListDict.Add(instrument, new CandleList(instrument.Uid, MarketDataModules.Candles.CandleInterval.Minute, default));
             }
             Console.WriteLine(russianInstruments.Count());
 
@@ -90,7 +91,7 @@ namespace tradeSDK
                     SubscriptionAction = SubscriptionAction.Subscribe
                 }
             });
-
+            int x = 0;
             // Обрабатываем все приходящие из стрима ответы
             await foreach (var response in streamMarketData.ResponseStream.ReadAllAsync())
             {
@@ -98,18 +99,19 @@ namespace tradeSDK
                 {
                     Console.WriteLine("cont");
                     continue;
-                }
-                CandleList candleList = CandlesListDict.FirstOrDefault(x => x.Key == response.Candle.InstrumentUid).Value;
-                lock (candleList)
+                }                
+                lock (CandlesListDict)
                 {
+                    CandleList candleList = CandlesListDict.FirstOrDefault(x => x.Key.Uid == response.Candle.InstrumentUid).Value;
+                    Share share = CandlesListDict.FirstOrDefault(x => x.Key.Uid == response.Candle.InstrumentUid).Key;
                     CandleStructure candleStructure = new CandleStructure(response?.Candle?.Open, response?.Candle?.Close, response?.Candle?.High, response?.Candle?.Low, response.Candle.Volume, response.Candle.Time.ToDateTime(), false);
-                    if (candleList == null || response.Candle.Time.ToDateTime() > candleList?.Candles?.LastOrDefault().Time)
+                    if (candleList?.Candles == null || response.Candle.Time.ToDateTime() > candleList?.Candles?.LastOrDefault()?.Time)
                     {
-                        Console.WriteLine("First if");
+                        //Console.WriteLine($"First if. resTime = {response.Candle.Time.ToDateTime()} canTime = {candleList?.Candles?.LastOrDefault()?.Time}");
                         candleList = GetMarketData.GetCandles(response.Candle.InstrumentUid, MarketDataModules.Candles.CandleInterval.Minute, 200);
                         if (response.Candle.Time.ToDateTime() > candleList.Candles.LastOrDefault().Time)
                         {
-                            Console.WriteLine("Second if");
+                            //Console.WriteLine($"Second if resTime = {response.Candle.Time.ToDateTime()} canTime = {candleList?.Candles?.LastOrDefault()?.Time} {x++}");
                             candleList.Candles.Add(candleStructure);
                         }
                     }
@@ -118,11 +120,22 @@ namespace tradeSDK
                         candleList.Candles.RemoveAt(candleList.Candles.Count - 1);
                         candleList.Candles.Add(candleStructure);
                     }
-                    Console.WriteLine(response.Candle.InstrumentUid);
-                    Console.WriteLine(candleList?.Candles?[^3].Time.ToString() + " " + candleList?.Candles?[^3].Close);
-                    Console.WriteLine(candleList?.Candles?[^2].Time.ToString() + " " + candleList?.Candles?[^2].Close);
-                    Console.WriteLine(candleList?.Candles?.LastOrDefault().Time.ToString());
-                    Console.WriteLine(candleList?.Candles?.LastOrDefault().Close);
+                    CandlesListDict.Remove(share);
+                    CandlesListDict.Add(share, candleList);
+
+
+                    BBV bBVMin = new BBV() { };
+                    var oneResult = bBVMin.TradeResult(candleList, new OperationResult());
+                    if (oneResult == TradeTarget.toLong)
+                    {
+                        Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {share.Ticker}, Name = {share.Name}, Trade = {oneResult} {candleStructure.Close} {DateTime.Now.ToString()} {share.Uid}");
+                    }
+
+                    //Console.WriteLine(response.Candle.InstrumentUid);
+                    //Console.WriteLine(candleList.Candles[^3].Time.ToString() + " " + candleList?.Candles?[^3].Close);
+                    //Console.WriteLine(candleList.Candles[^2].Time.ToString() + " " + candleList?.Candles?[^2].Close);
+                    //Console.WriteLine(candleList.Candles.LastOrDefault().Time.ToString());
+                    //Console.WriteLine(candleList?.Candles?.LastOrDefault().Close);
                 }
             }
 
