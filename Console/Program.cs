@@ -105,28 +105,35 @@ namespace tradeSDK
                     CandleList candleList = CandlesListDict.FirstOrDefault(x => x.Key.Uid == response.Candle.InstrumentUid).Value;
                     Share share = CandlesListDict.FirstOrDefault(x => x.Key.Uid == response.Candle.InstrumentUid).Key;
                     CandleStructure candleStructure = new CandleStructure(response?.Candle?.Open, response?.Candle?.Close, response?.Candle?.High, response?.Candle?.Low, response.Candle.Volume, response.Candle.Time.ToDateTime(), false);
-                    if (candleList?.Candles == null || response.Candle.Time.ToDateTime() > candleList?.Candles?.LastOrDefault()?.Time)
+                    if (candleList?.Candles == null)
                     {
                         //Console.WriteLine($"First if. resTime = {response.Candle.Time.ToDateTime()} canTime = {candleList?.Candles?.LastOrDefault()?.Time}");
                         candleList = GetMarketData.GetCandles(response.Candle.InstrumentUid, MarketDataModules.Candles.CandleInterval.Minute, 200);
-                        if (response.Candle.Time.ToDateTime() > candleList.Candles.LastOrDefault().Time)
-                        {
-                            //Console.WriteLine($"Second if resTime = {response.Candle.Time.ToDateTime()} canTime = {candleList?.Candles?.LastOrDefault()?.Time} {x++}");
-                            candleList.Candles.Add(candleStructure);
-                        }
+
                     }
-                    else if (response.Candle.Time.ToDateTime() == candleList?.Candles?.LastOrDefault().Time)
+                    if (response.Candle.Time.ToDateTime() > candleList.Candles.LastOrDefault().Time)
                     {
-                        candleList.Candles.RemoveAt(candleList.Candles.Count - 1);
+                        //Console.WriteLine($"Second if resTime = {response.Candle.Time.ToDateTime()} canTime = {candleList?.Candles?.LastOrDefault()?.Time} {x++}");
                         candleList.Candles.Add(candleStructure);
                     }
+                    else
+                    {
+                        var index = candleList.Candles.LastIndexOf(candleList.Candles.Last(y => y.Time == response.Candle.Time.ToDateTime()));
+                        candleList.Candles[index] = candleStructure;
+                    }
+
+                    candleList = new CandleList(candleList.Figi, candleList.Interval, candleList.Candles.TakeLast(205).ToList());
                     CandlesListDict.Remove(share);
                     CandlesListDict.Add(share, candleList);
 
 
                     BBV bBVMin = new BBV() { };
-                    var oneResult = bBVMin.TradeResult(candleList, new OperationResult());
+                    var oneResult = bBVMin.Result(candleList, new OperationResult());
                     if (oneResult == TradeTarget.toLong)
+                    {
+                        Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {share.Ticker}, Name = {share.Name}, Trade = {oneResult} {candleStructure.Close} {DateTime.Now.ToString()} {share.Uid}");
+                    }
+                    if (oneResult == TradeTarget.toShort)
                     {
                         Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {share.Ticker}, Name = {share.Name}, Trade = {oneResult} {candleStructure.Close} {DateTime.Now.ToString()} {share.Uid}");
                     }
@@ -188,13 +195,13 @@ namespace tradeSDK
 
 
                     
-                    var oneResult = bBVMin.TradeResult(candlesOne, new OperationResult());
+                    var oneResult = bBVMin.Result(candlesOne, new OperationResult());
                     if (oneResult == TradeTarget.toLong)
                     {
                         Console.WriteLine($"Result: {bBVMin.PVORes}, {bBVMin.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 1Min = {oneResult} {DateTime.Now.ToString()} {item.Uid}");
                     }
                     
-                    oneResult = bBVFiv.TradeResult(candlesFive, new OperationResult());
+                    oneResult = bBVFiv.Result(candlesFive, new OperationResult());
                     if (oneResult == TradeTarget.toLong)
                     {
                         Console.WriteLine($"Result: {bBVFiv.PVORes}, {bBVFiv.BBProcent} Ticket = {item.Ticker}, Name = {item.Name}, {orderbook.LastPrice}, 5Min = {oneResult} {DateTime.Now.ToString()} {item.Uid}");
