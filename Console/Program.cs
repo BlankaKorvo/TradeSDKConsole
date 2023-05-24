@@ -1,32 +1,21 @@
-﻿using System;
-using System.Threading.Tasks;
-using Serilog;
+﻿using Analysis.TradeDecision;
 using DataCollector;
-using System.IO;
+using DataCollector.TinkoffAdapterGrpc;
+using Google.Protobuf.Collections;
+using Grpc.Core;
 using MarketDataModules.Candles;
-using System.Diagnostics;
-using ResearchLib;
-using Analysis.TradeDecision;
+using MarketDataModules.Trading;
+using ResearchLib.SyntTradeResultDatabase.Client;
+using Serilog;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
-
-using ResearchLib.SyntTradeResultDatabase.Client;
-using System.Transactions;
-using MarketDataModules.Trading;
-using ResearchLib.SyntetResultDatabase.Model;
-using Google.Protobuf.WellKnownTypes;
+using System.Threading.Tasks;
 //using Tinkoff.InvestApi.V1;
 using Tinkoff.InvestApi;
-using Google.Protobuf.Collections;
-using DataCollector.TinkoffAdapterGrpc;
-using Microsoft.Extensions.DependencyInjection;
 using Tinkoff.InvestApi.V1;
-using Google.Protobuf;
-using Analysis;
-using Skender.Stock.Indicators;
-using Grpc.Core;
-using System.Text.Json;
 //using TinkoffLegacy.InvestApi.V1;
 
 namespace tradeSDK
@@ -69,15 +58,22 @@ namespace tradeSDK
             foreach (var instrument in russianInstruments)
             { 
                 Console.WriteLine($"{instrument.Name} {instrument.Uid}");
-                CandlesListDict.Add(instrument, new CandleListOrder() { candleList = new CandleList(instrument.Uid, MarketDataModules.Candles.CandleInterval.Minute, default), operationResult = new OperationResult() { OperationPrice = 0, State = MarketDataModules.Trading.OperationState.NoState } } );
+                var candlesForVolumeMax = GetMarketData.GetCandles(instrument.Uid, MarketDataModules.Candles.CandleInterval.Minute, 4500);
+                var averageMaxVolume = (int)Math.Round(candlesForVolumeMax.Candles.OrderBy(x =>x.Volume).TakeLast(10).Average(x => x.Volume), MidpointRounding.AwayFromZero);
+                CandlesListDict.Add(instrument, new CandleListOrder() { 
+                    CandleList = new CandleList(instrument.Uid, MarketDataModules.Candles.CandleInterval.Minute, default), 
+                    OperationResult = new OperationResult() { OperationPrice = 0, State = MarketDataModules.Trading.OperationState.NoState },
+                    BbvObject = new BBV() { MaxVolume = averageMaxVolume },
+                    //VolumeMax = averageMaxVolume
+                } );
             }
             Console.WriteLine(russianInstruments.Count());
-
+            Thread.Sleep(61000);
 
             RepeatedField<CandleInstrument> subInstruments = new RepeatedField<CandleInstrument>();            
             foreach (var instrument in russianInstruments)
             {
-                CandleInstrument candleInstrument = new CandleInstrument() { InstrumentId = instrument.Uid, Interval = SubscriptionInterval.OneMinute };
+                CandleInstrument candleInstrument = new CandleInstrument() { InstrumentId = instrument.Uid, Interval = SubscriptionInterval.OneMinute};
                 subInstruments.Add(candleInstrument);
             }
 
@@ -87,24 +83,28 @@ namespace tradeSDK
             {
                 SubscribeCandlesRequest = new SubscribeCandlesRequest
                 {
-                    Instruments = { subInstruments },                  
-                    SubscriptionAction = SubscriptionAction.Subscribe
+                    Instruments = { subInstruments },
+                    SubscriptionAction = SubscriptionAction.Subscribe,
+                    WaitingClose = false
                 }
             });
             int x = 0;
             // Обрабатываем все приходящие из стрима ответы
             await foreach (var response in streamMarketData.ResponseStream.ReadAllAsync())
             {
+
                 if (response.Candle == null)
                 {
-                    Console.WriteLine("cont");
+                    //x = 0;
+                    //Console.WriteLine("cont");
                     continue;
-                }     
+                }
+                //Console.WriteLine(x++);
                 //if (response.Candle.InstrumentUid)
                 lock (CandlesListDict)
                 {
                     CandleListOrder candleListOrder = CandlesListDict.FirstOrDefault(x => x.Key.Uid == response.Candle.InstrumentUid).Value;
-                    CandleList candleList = candleListOrder.candleList;
+                    CandleList candleList = candleListOrder.CandleList;
                     Share share = CandlesListDict.FirstOrDefault(x => x.Key.Uid == response.Candle.InstrumentUid).Key;
                     CandleStructure candleStructure = new CandleStructure(response?.Candle?.Open, response?.Candle?.Close, response?.Candle?.High, response?.Candle?.Low, response.Candle.Volume, response.Candle.Time.ToDateTime(), false);
                     if (candleList?.Candles == null)
@@ -123,45 +123,60 @@ namespace tradeSDK
                         var index = candleList.Candles.LastIndexOf(candleList.Candles.Last(y => y.Time == response.Candle.Time.ToDateTime()));
                         candleList.Candles[index] = candleStructure;
                     }
-
-                    candleListOrder.candleList = new CandleList(candleList.Figi, candleList.Interval, candleList.Candles.TakeLast(205).ToList());
+                    candleListOrder.CandleList = new CandleList(candleList.Figi, candleList.Interval, candleList.Candles.TakeLast(205).ToList());
 
                     CandlesListDict.Remove(share);
                     CandlesListDict.Add(share, candleListOrder);
-
-
-                    BBV bBVMin = new BBV() { };
-                    var oneResult = bBVMin.TradeResult(candleList, candleListOrder.operationResult);
-                    if (oneResult == TradeTarget.toLong)
-                    {
-                        candleListOrder.operationResult.OperationPrice = candleStructure.Close;
-                        candleListOrder.operationResult.State = MarketDataModules.Trading.OperationState.Long;
-                        WriteLine(share, candleStructure, bBVMin, oneResult);
-                    }
-                    else if (oneResult == TradeTarget.toShort)
-                    {
-                        candleListOrder.operationResult.OperationPrice = candleStructure.Close;
-                        candleListOrder.operationResult.State = MarketDataModules.Trading.OperationState.Short;
-                        WriteLine(share, candleStructure, bBVMin, oneResult);
-                    }
-                    else if (oneResult == TradeTarget.fromLong)
-                    {
-                        //candleListOrder.operationResult.OperationPrice = candleStructure.Close;
-                        candleListOrder.operationResult.State = MarketDataModules.Trading.OperationState.NoState;
-                        WriteLine(share, candleStructure, bBVMin, oneResult);
-                    }
-                    else if (oneResult == TradeTarget.fromShort)
-                    {
-                        //candleListOrder.operationResult.OperationPrice = candleStructure.Close;
-                        candleListOrder.operationResult.State = MarketDataModules.Trading.OperationState.NoState;
-                        WriteLine(share, candleStructure, bBVMin, oneResult);
-                    }
 
                     //Console.WriteLine(response.Candle.InstrumentUid);
                     //Console.WriteLine(candleList.Candles[^3].Time.ToString() + " " + candleList?.Candles?[^3].Close);
                     //Console.WriteLine(candleList.Candles[^2].Time.ToString() + " " + candleList?.Candles?[^2].Close);
                     //Console.WriteLine(candleList.Candles.LastOrDefault().Time.ToString());
                     //Console.WriteLine(candleList?.Candles?.LastOrDefault().Close);
+
+                    
+                    var oneResult = candleListOrder.BbvObject.TradeResult(candleListOrder.CandleList, candleListOrder.OperationResult);
+                    if (oneResult == TradeTarget.toLong)
+                    {
+                        //var minuteCandleList = GetMarketData.GetCandles(response.Candle.InstrumentUid, MarketDataModules.Candles.CandleInterval.FiveMinutes, 200);
+                        //var twoResult = bBVMin.TradeResult(minuteCandleList, candleListOrder.operationResult);
+                        //if (twoResult != TradeTarget.toLong)
+                        //{
+                        //    continue;
+                        //}
+                        candleListOrder.OperationResult.OperationPrice = candleStructure.Close;
+                        candleListOrder.OperationResult.State = MarketDataModules.Trading.OperationState.Long;
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        WriteLine(share, candleStructure, candleListOrder.BbvObject, oneResult);
+                    }
+                    else if (oneResult == TradeTarget.toShort)
+                    {
+                        //var fiveCandleList = GetMarketData.GetCandles(response.Candle.InstrumentUid, MarketDataModules.Candles.CandleInterval.FiveMinutes, 200);
+                        //var twoResult = bBVMin.TradeResult(fiveCandleList, candleListOrder.operationResult);
+                        //if (twoResult != TradeTarget.toShort)
+                        //{
+                        //    continue;
+                        //}
+                        candleListOrder.OperationResult.OperationPrice = candleStructure.Close;
+                        candleListOrder.OperationResult.State = MarketDataModules.Trading.OperationState.Short;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        WriteLine(share, candleStructure, candleListOrder.BbvObject, oneResult);
+                    }
+                    else if (oneResult == TradeTarget.fromLong)
+                    {
+                        //candleListOrder.operationResult.OperationPrice = candleStructure.Close;
+                        candleListOrder.OperationResult.State = MarketDataModules.Trading.OperationState.NoState;
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        WriteLine(share, candleStructure, candleListOrder.BbvObject, oneResult);
+                    }
+                    else if (oneResult == TradeTarget.fromShort)
+                    {
+                        //candleListOrder.operationResult.OperationPrice = candleStructure.Close;
+                        candleListOrder.OperationResult.State = MarketDataModules.Trading.OperationState.NoState;
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        WriteLine(share, candleStructure, candleListOrder.BbvObject, oneResult);
+                    }
+
                 }
             }
             
@@ -367,7 +382,7 @@ namespace tradeSDK
 
             static void WriteLine(Share share, CandleStructure candleStructure, BBV bBVMin, TradeTarget oneResult)
             {
-                Console.WriteLine($"{oneResult} {candleStructure.Close} Ticket = {share.Ticker}, Name = {share.Name}, {bBVMin.Trigger} {bBVMin.BbpFirst} {bBVMin.PVOResFirst} {candleStructure.Time} ");
+                Console.WriteLine($"{oneResult} {candleStructure.Close} Ticket = {share.Ticker}, Name = {share.Name}, {bBVMin.Trigger} {bBVMin.BbpFirst} {bBVMin.PVOResFirst} volume = {candleStructure.Volume} {candleStructure.Time} ");
             }
 
 
