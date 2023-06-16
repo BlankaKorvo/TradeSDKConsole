@@ -8,6 +8,7 @@ using MarketDataModules.Trading;
 using ResearchLib.SyntTradeResultDatabase.Client;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -42,6 +43,9 @@ namespace tradeSDK
             Log.Information("Start program");
             Console.Write(logTemplate);
 
+
+
+
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
             PortfolioStreamRequest request = new PortfolioStreamRequest();
@@ -68,7 +72,7 @@ namespace tradeSDK
                 } );
             }
             Console.WriteLine(russianInstruments.Count());
-            Thread.Sleep(61000);
+            Thread.Sleep(1000);
 
             RepeatedField<CandleInstrument> subInstruments = new RepeatedField<CandleInstrument>();            
             foreach (var instrument in russianInstruments)
@@ -147,6 +151,9 @@ namespace tradeSDK
                         candleListOrder.OperationResult.OperationPrice = candleStructure.Close;
                         candleListOrder.OperationResult.State = MarketDataModules.Trading.OperationState.Long;
                         Console.ForegroundColor = ConsoleColor.Green;
+
+                        //PriseStory.TryAdd(response.)
+
                         WriteLine(share, candleStructure, candleListOrder.BbvObject, oneResult);
                     }
                     else if (oneResult == TradeTarget.toShort)
