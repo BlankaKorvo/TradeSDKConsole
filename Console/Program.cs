@@ -50,10 +50,10 @@ namespace tradeSDK
 
             //string token = File.ReadAllLines("toksann.dll")[0].Trim();
             InvestApiClient client = GetClient.Grpc;
-            PortfolioStreamRequest request = new PortfolioStreamRequest();
+            //PortfolioStreamRequest request = new PortfolioStreamRequest();
 
-            var streamMarketData = client.MarketDataStream.MarketDataStream();
-            var streamPortfolio = client.OperationsStream.PortfolioStream(request);
+            //var streamMarketData = client.MarketDataStream.MarketDataStream();
+            //var streamPortfolio = client.OperationsStream.PortfolioStream(request);
 
             var instruments = client.Instruments.Shares();
             Console.WriteLine(instruments.Instruments.Count());
@@ -87,15 +87,16 @@ namespace tradeSDK
 
 
             // Отправляем запрос в стрим
-            await streamMarketData.RequestStream.WriteAsync(new MarketDataRequest
-            {
-                SubscribeCandlesRequest = new SubscribeCandlesRequest
-                {
-                    Instruments = { subInstruments },
-                    SubscriptionAction = SubscriptionAction.Subscribe,
-                    WaitingClose = false
-                }
-            });
+            //await streamMarketData.RequestStream.WriteAsync(new MarketDataRequest
+            //{
+            //    SubscribeCandlesRequest = new SubscribeCandlesRequest
+            //    {
+            //        Instruments = { subInstruments },
+            //        SubscriptionAction = SubscriptionAction.Subscribe,
+            //        WaitingClose = false
+            //    }
+            //});
+            var streamMarketData = await SubscribeTinkoffData.Candles(subInstruments);
             int x = 0;
             // Обрабатываем все приходящие из стрима ответы
             try
