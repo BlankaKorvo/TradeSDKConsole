@@ -1,6 +1,7 @@
 ﻿using Analysis.TradeDecision;
 using DataCollector;
 using DataCollector.TinkoffAdapterGrpc;
+using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
@@ -43,7 +44,6 @@ namespace tradeSDK
                 .CreateLogger();
 
             Log.Information("Start program");
-            Console.Write(logTemplate);
 
 
 
@@ -56,6 +56,66 @@ namespace tradeSDK
             //var streamPortfolio = client.OperationsStream.PortfolioStream(request);
 
             var instruments = client.Instruments.Shares();
+            var accounts = client.Users.GetAccounts();
+            var acc = accounts.Accounts;
+            var id = acc.FirstOrDefault(x => x.Name == "Стратегия роста РФ").Id;
+            Console.WriteLine(id);
+
+            var portfolioReq = new PortfolioRequest() { AccountId = id };
+            var portfolio = client.Operations.GetPortfolio(portfolioReq);
+
+            Console.WriteLine(portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").Quantity);
+            Console.WriteLine(portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").QuantityLots);
+            Console.WriteLine(portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").CurrentPrice);
+            Console.WriteLine(portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").CurrentPrice * portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").Quantity);
+            Console.WriteLine(portfolio.TotalAmountPortfolio);
+            Console.WriteLine();
+
+            //var position = new PositionsStreamRequest() { Accounts = new RepeatedField<string>()};
+            //AsyncServerStreamingCall<PositionsStreamResponse> positionStream = client.OperationsStream.PositionsStream(position);
+
+            //positionStream.ResponseStream.ReadAllAsync();//ResponseStream.ReadAllAsync<PortfolioStreamResponse>();
+
+            //await foreach (var response in positionStream.ResponseStream.ReadAllAsync())
+            //{
+            //    if (response == null)
+            //    {
+            //        //x = 0;
+            //        //Console.WriteLine("cont");
+            //        continue;
+            //    }
+            //    if (response.Position == null)
+            //    {
+            //        //x = 0;
+            //        //Console.WriteLine("cont");
+            //        continue;
+            //    }
+
+            //    Console.WriteLine(response.Position.Money);
+            //}
+
+            //var portfolio = new PortfolioStreamRequest() /*{ Accounts = new RepeatedField<string> { "" } }*/;
+            //AsyncServerStreamingCall<PortfolioStreamResponse> portfolioStream = client.OperationsStream.PortfolioStream(portfolio);
+
+            //portfolioStream.ResponseStream.ReadAllAsync<PortfolioStreamResponse>();
+
+            //await foreach (var response in portfolioStream.ResponseStream.ReadAllAsync())
+            //{
+            //    if (response.Portfolio == null)
+            //    {
+            //        //x = 0;
+            //        //Console.WriteLine("cont");
+            //        continue;
+            //    }
+            //    foreach (var item in response.Subscriptions.Accounts)
+            //    {
+            //        Console.WriteLine(item);
+            //    }
+
+            //    Console.WriteLine(response.Portfolio.TotalAmountShares.Currency);
+            //}
+
+
             Console.WriteLine(instruments.Instruments.Count());
             var russianInstruments = instruments.Instruments.Where(x => x.ForQualInvestorFlag == false)/*.Where(x => x.Currency == "rub")*/.Where(x => x.ShortEnabledFlag == true).OrderBy(x => x.Ticker);
 
@@ -96,6 +156,11 @@ namespace tradeSDK
             //        WaitingClose = false
             //    }
             //});
+
+
+
+
+
             var streamMarketData = await SubscribeTinkoffData.Candles(subInstruments);
             int x = 0;
             // Обрабатываем все приходящие из стрима ответы
