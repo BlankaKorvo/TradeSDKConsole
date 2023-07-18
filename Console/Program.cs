@@ -63,7 +63,7 @@ namespace tradeSDK
 
             var portfolioReq = new PortfolioRequest() { AccountId = id };
             var portfolio = client.Operations.GetPortfolio(portfolioReq);
-
+ 
             Console.WriteLine(portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").Quantity);
             Console.WriteLine(portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").QuantityLots);
             Console.WriteLine(portfolio.Positions.FirstOrDefault(x => x.Figi == "BBG004S681M2").CurrentPrice);
